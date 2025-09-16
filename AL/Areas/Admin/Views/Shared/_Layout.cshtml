@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - My ASP.NET Application</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="~/Areas/Admin/Content/CSS/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Areas/Admin/Content/CSS/footer.css" rel="stylesheet" />
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        @Html.ActionLink("Home", "Index", "Home", new { area = "Admin" }, new { @class = "nav-link" })
+                    </li>
+                    <li class="nav-item">
+                        @Html.ActionLink("Prescriptions", "ViewPatient", "Patient", new { area = "Admin" }, new { @class = "nav-link" })
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Shared confirmation modal -->
+    @Html.Partial("_ConfirmModal")
+
+    <!-- Main Content -->
+    <div class="container mt-3">
+        @RenderBody()
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-4">
+        <div class="container">
+            <p class="mb-0">&copy; @DateTime.Now.Year - H2Software Consulting Services.</p>
+            <small>All rights reserved.</small>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/Areas/Admin/Content/JS/jquery-3.6.0.min.js"></script>
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/Areas/Admin/Content/JS/bootstrap.bundle.min.js"></script>
+    <script src="~/Areas/Admin/Content/JS/validation.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

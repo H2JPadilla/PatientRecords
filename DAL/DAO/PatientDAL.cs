@@ -1,126 +1,145 @@
-﻿using EL;
+﻿
+using EL;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DAL.DAO
 {
     public class PatientDAL : DatabaseContext
     {
-        public PatientEntity GetPatientById(int id)
+        public List<PatientEntity> GetPatients()
         {
-            PatientEntity drug = null;
+            var list = new List<PatientEntity>();
             using (var con = GetConnection())
             {
-                string query = "SELECT ID, Patient, DrugName, Dosage, ModifiedDate FROM TablePrescription WHERE ID=@ID";
-                using (SqlCommand cmd = new SqlCommand(query, con))
+                var cmd = new SqlCommand("SELECT ID, Patient, DrugName, Dosage, ModifiedDate FROM TablePrescription", con);
+                con.Open();
+                var rdr = cmd.ExecuteReader();
+                while (rdr.Read())
                 {
-                    cmd.Parameters.AddWithValue("@ID", id);
-                    con.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    list.Add(new PatientEntity
                     {
-                        if (reader.Read())
-                        {
-                            drug = new PatientEntity
-                            {
-                                ID = Convert.ToInt32(reader["ID"].ToString()),
-                                Patient = reader["Patient"].ToString(),
-                                DrugName = reader["DrugName"].ToString(),
-                                Dosage= Convert.ToDecimal(reader["Dosage"].ToString()),
-                                ModifiedDate= Convert.ToDateTime(reader["ModifiedDate"])
-                            };
-                        }
-                    }
+                        ID = (int)rdr["ID"],
+                        Patient = rdr["Patient"].ToString(),
+                        DrugName = rdr["DrugName"].ToString(),
+                        Dosage = Convert.ToInt32(rdr["Dosage"]),
+                        ModifiedDate = Convert.ToDateTime(rdr["ModifiedDate"])
+                    });
                 }
-                return drug;
             }
+            return list;
         }
 
-        public void AddPatient(PatientEntity drug)
+        public PatientEntity GetPatientById(int id)
         {
             using (var con = GetConnection())
             {
-                string query = "INSERT INTO TablePrescription (Patient, DrugName, Dosage, ModifiedDate) " +
-                               "VALUES (@Patient, @DrugName, @Dosage, @ModifiedDate)";
+                var cmd = new SqlCommand("SELECT ID, Patient, DrugName, Dosage, ModifiedDate FROM TablePrescription WHERE ID=@ID", con);
+                cmd.Parameters.AddWithValue("@ID", id);
+                con.Open();
+                var rdr = cmd.ExecuteReader();
+                if (rdr.Read())
+                {
+                    return new PatientEntity
+                    {
+                        ID = (int)rdr["ID"],
+                        Patient = rdr["Patient"].ToString(),
+                        DrugName = rdr["DrugName"].ToString(),
+                        Dosage = Convert.ToInt32(rdr["Dosage"]),
+                        ModifiedDate = Convert.ToDateTime(rdr["ModifiedDate"])
+                    };
+                }
+            }
+            return null;
+        }
 
-                SqlCommand cmd = new SqlCommand(query, con);
-                cmd.Parameters.AddWithValue("@Patient", drug.Patient);
-                cmd.Parameters.AddWithValue("@DrugName", drug.DrugName);
-                cmd.Parameters.AddWithValue("@Dosage", drug.Dosage);
-                cmd.Parameters.AddWithValue("@ModifiedDate", drug.ModifiedDate);
+        public void AddPatient(PatientEntity patient)
+        {
+            using (var con = GetConnection())
+            {
+                var cmd = new SqlCommand(
+                    "INSERT INTO TablePrescription (Patient, DrugName, Dosage, ModifiedDate) VALUES (@Patient, @DrugName, @Dosage, @ModifiedDate)", con);
+
+                cmd.Parameters.AddWithValue("@Patient", patient.Patient);
+                cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);
+                cmd.Parameters.AddWithValue("@Dosage", patient.Dosage);
+                cmd.Parameters.AddWithValue("@ModifiedDate", patient.ModifiedDate);
 
                 con.Open();
                 cmd.ExecuteNonQuery();
             }
         }
 
-        public List<PatientEntity> GetPatient()
+        public void UpdatePatient(PatientEntity patient)
         {
-            var drugs = new List<PatientEntity>();
             using (var con = GetConnection())
             {
-                string query = "SELECT ID, Patient, DrugName, Dosage, ModifiedDate FROM TablePrescription";
-                SqlCommand cmd = new SqlCommand(query, con);
+                var cmd = new SqlCommand(
+                    "UPDATE TablePrescription SET Patient=@Patient, DrugName=@DrugName, Dosage=@Dosage, ModifiedDate=@ModifiedDate WHERE ID=@ID", con);
+
+                cmd.Parameters.AddWithValue("@Patient", patient.Patient);
+                cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);
+                cmd.Parameters.AddWithValue("@Dosage", patient.Dosage);
+                cmd.Parameters.AddWithValue("@ModifiedDate", patient.ModifiedDate);
+                cmd.Parameters.AddWithValue("@ID", patient.ID);
+
                 con.Open();
-
-                SqlDataReader dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    drugs.Add(new PatientEntity
-                    {
-                        ID = Convert.ToInt32(dr["ID"].ToString()),
-                        Patient = dr["Patient"].ToString(),
-                        DrugName = dr["DrugName"].ToString(),
-                        Dosage = Convert.ToDecimal(dr["Dosage"].ToString()),
-                        ModifiedDate = Convert.ToDateTime(dr["ModifiedDate"])
-                    });
-                }
-                return drugs;
+                cmd.ExecuteNonQuery();
             }
         }
 
-        public bool UpdatePatient(PatientEntity drug)
+        public void DeletePatient(int id)
         {
-            bool isUpdated = false;
             using (var con = GetConnection())
             {
-                string query = @"UPDATE TablePrescription SET Patient=@Patient, DrugName=@DrugName, Dosage=@Dosage, ModifiedDate=@ModifiedDate WHERE ID=@ID";
-                using(SqlCommand cmd = new SqlCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@ID", drug.ID);
-                    cmd.Parameters.AddWithValue("@Patient", drug.Patient);
-                    cmd.Parameters.AddWithValue("@DrugName", drug.DrugName);
-                    cmd.Parameters.AddWithValue("@Dosage", drug.Dosage);
-                    cmd.Parameters.AddWithValue("@ModifiedDate", drug.ModifiedDate);
-
-                    con.Open();
-                    int rows = cmd.ExecuteNonQuery();
-                    isUpdated = rows > 0;
-                }
+                var cmd = new SqlCommand("DELETE FROM TablePrescription WHERE ID=@ID", con);
+                cmd.Parameters.AddWithValue("@ID", id);
+                con.Open();
+                cmd.ExecuteNonQuery();
             }
-            return isUpdated;
         }
 
-        public bool DeletePatient(int id)
+        public bool Exists(string patient, string drug, int? dosage, DateTime? date = null, int? excludeId = null, bool isUniqueDrugCheck = false)
         {
-            bool isDeleted = false;
             using (var con = GetConnection())
             {
-                string query = @"DELETE FROM TablePrescription WHERE ID=@id";
-                using (SqlCommand cmd = new SqlCommand(query, con))
+                string sql;
+                if (isUniqueDrugCheck)
                 {
-                    cmd.Parameters.AddWithValue("@id", id);
-                   
-                    con.Open();
-                    int rows = cmd.ExecuteNonQuery();
-                    isDeleted = rows > 0;
+                    sql = "SELECT COUNT(1) FROM TablePrescription WHERE Patient = @Patient AND CAST(ModifiedDate AS DATE) = CAST(@Date AS DATE)";
                 }
+                else
+                {
+                    sql = "SELECT COUNT(1) FROM TablePrescription WHERE Patient = @Patient AND DrugName = @DrugName AND Dosage = @Dosage AND CAST(ModifiedDate AS DATE) = CAST(@Date AS DATE)";
+                }
+
+                if (excludeId.HasValue)
+                {
+                    sql += " AND ID <> @ID";
+                }
+
+                var cmd = new SqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@Patient", patient);
+
+                if (!isUniqueDrugCheck)
+                {
+                    cmd.Parameters.AddWithValue("@DrugName", drug);
+                    cmd.Parameters.AddWithValue("@Dosage", dosage);
+                }
+                cmd.Parameters.AddWithValue("@Date", date.Value.Date);
+
+                if (excludeId.HasValue)
+                {
+                    cmd.Parameters.AddWithValue("@ID", excludeId.Value);
+                }
+
+                con.Open();
+                object result = cmd.ExecuteScalar();
+                int count = Convert.ToInt32(result);
+
+                return count > 0;
             }
-            return isDeleted;
         }
     }
 }

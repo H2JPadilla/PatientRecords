@@ -16,7 +16,8 @@ namespace UL
         public const string FailedToAdd = "Failed to add data";
         public const string FailedToUpdate = "Failed to update data";
         public const string FailedToDelete = "Failed to delete data";
-        public const string Exist = "Record already exists!";
+        public const string ExistingRecord = "Record already exists!";
+        public const string ExistingDrug = "This patient can already take this medicine once per day";
 
         //CATCH MESSAGES
         public const string NullException = "A required value is missing.";

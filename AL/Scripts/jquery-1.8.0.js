@@ -7500,7 +7500,9 @@ jQuery.extend({
 		// It is defined here because jslint complains if it is declared
 		// at the end of the function (which would be more logical and readable)
 		function done( status, nativeStatusText, responses, headers ) {
-			var isSuccess, success, error, response, modified,
+			var 
+			
+			, success, error, response, modified,
 				statusText = nativeStatusText;
 
 			// Called once

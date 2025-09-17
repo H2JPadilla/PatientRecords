@@ -141,10 +141,7 @@
     <Content Include="Areas\Admin\Views\Home\Index.cshtml" />
     <Content Include="Areas\Admin\Views\Patient\ViewPatient.cshtml" />
     <Content Include="Areas\Admin\Views\Patient\AddPatient.cshtml" />
-    <Content Include="Areas\Admin\Views\Patient\Partial\PatientForm.cshtml" />
     <Content Include="Areas\Admin\Views\Patient\UpdatePatient.cshtml" />
-    <Content Include="Areas\Admin\Views\Shared\_ConfirmModal.cshtml" />
-    <Content Include="Areas\Admin\Views\Patient\Partial\_ConfirmModal.cshtml" />
     <None Include="packages.config" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>

@@ -5,6 +5,8 @@ using System.Web.Mvc;
 using BLL;
 using EL;
 using UL;
+using System.Globalization;
+
 
 namespace AL.Areas.Admin.Controllers
 {
@@ -12,43 +14,31 @@ namespace AL.Areas.Admin.Controllers
     {
         private readonly PatientBLL bll = new PatientBLL();
 
-        // VIEW: Patients with search + pagination
+        // Standard View: Used for the initial page load with filtering and pagination
         public ActionResult ViewPatient(
             string patient = "",
             string drug = "",
-            int? dosage = null,
-            DateTime? fromDate = null,
-            DateTime? toDate = null,
+            decimal? dosage = null,
+            DateTime? date = null,
             int page = 1,
             int pageSize = 5)
         {
             var patients = bll.GetPatients();
 
-            // Filtering
+            // Filtering logic is applied here
             if (!string.IsNullOrEmpty(patient))
                 patients = patients
-                    .Where(p => p.Patient != null &&
-                                p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .Where(p => p.Patient != null && p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
                     .ToList();
-
             if (!string.IsNullOrEmpty(drug))
                 patients = patients
-                    .Where(p => p.DrugName != null &&
-                                p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
                     .ToList();
-
             if (dosage.HasValue)
-                patients = patients
-                    .Where(p => p.Dosage == dosage.Value)
-                    .ToList();
+                patients = patients.Where(p => p.Dosage == dosage.Value).ToList();
+            if (date.HasValue)
+                patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
 
-            if (fromDate.HasValue)
-                patients = patients.Where(p => p.ModifiedDate.Date >= fromDate.Value.Date).ToList();
-
-            if (toDate.HasValue)
-                patients = patients.Where(p => p.ModifiedDate.Date <= toDate.Value.Date).ToList();
-
-            // Pagination
             int totalRecords = patients.Count();
             var pagedPatients = patients
                 .OrderByDescending(p => p.ModifiedDate)
@@ -56,17 +46,68 @@ namespace AL.Areas.Admin.Controllers
                 .Take(pageSize)
                 .ToList();
 
-            // Pass filters back to view
             ViewBag.Patient = patient;
             ViewBag.Drug = drug;
             ViewBag.Dosage = dosage;
-            ViewBag.FromDate = fromDate?.ToString("yyyy-MM-dd");
-            ViewBag.ToDate = toDate?.ToString("yyyy-MM-dd");
-
+            ViewBag.Date = date?.ToString("MM-dd-yyyy");
             ViewBag.Page = page;
             ViewBag.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            ViewBag.PageSize = pageSize;
 
             return View(pagedPatients);
+        }
+
+        // AJAX Action: Returns JSON for live search
+        [HttpGet]
+        public JsonResult SearchPatients(
+            string patient = "",
+            string drug = "",
+            decimal? dosage = null,
+            DateTime? date = null,
+            int page = 1,
+            int pageSize = 5)
+        {
+            var patients = bll.GetPatients();
+
+            if (!string.IsNullOrEmpty(patient))
+                patients = patients
+                    .Where(p => p.Patient != null && p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .ToList();
+            if (!string.IsNullOrEmpty(drug))
+                patients = patients
+                    .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .ToList();
+            if (dosage.HasValue)
+                patients = patients.Where(p => p.Dosage == dosage.Value).ToList();
+            if (date.HasValue)
+                patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
+
+            int totalRecords = patients.Count();
+            var pagedPatients = patients
+                .OrderByDescending(p => p.ModifiedDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+            // Explicitly format the ModifiedDate to a string
+            var formattedPatients = pagedPatients.Select(p => new
+            {
+                p.ID,
+                p.Patient,
+                p.DrugName,
+                p.Dosage,
+                ModifiedDate = p.ModifiedDate.ToString("MM-dd-yyyy") // Format as a standard date string
+            }).ToList();
+
+            return Json(new
+            {
+                patients = formattedPatients,
+                totalPages = totalPages,
+                page = page,
+                pageSize = pageSize
+            }, JsonRequestBehavior.AllowGet);
         }
 
         // GET: Add Patient
@@ -86,22 +127,8 @@ namespace AL.Areas.Admin.Controllers
                 return View("AddPatient", model);
             }
 
-            // Validation 1: Check for exact duplicate record
-            if (bll.Exists(model.Patient, model.DrugName, model.Dosage, DateTime.Now))
-            {
-                ModelState.AddModelError("", "Data already exist.");
-                return View("AddPatient", model);
-            }
-
-            // Validation 2: Check for unique medicine per day for the same patient
-            if (bll.Exists(model.Patient, null, 0, DateTime.Now, null, true))
-            {
-                ModelState.AddModelError("", "One medicine per day is allowed.");
-                return View("AddPatient", model);
-            }
-
             bll.AddPatient(model);
-            TempData["Message"] = "Patient added successfully!";
+            TempData["Message"] = MessageUtil.AddSuccess;
             return RedirectToAction("ViewPatient");
         }
 
@@ -112,7 +139,7 @@ namespace AL.Areas.Admin.Controllers
             var patient = bll.GetPatientById(id);
             if (patient == null)
             {
-                TempData["Message"] = "Record not found!";
+                TempData["Message"] = MessageUtil.RecordNotFound;
                 return RedirectToAction("ViewPatient");
             }
             return View(patient);
@@ -128,22 +155,8 @@ namespace AL.Areas.Admin.Controllers
                 return View("UpdatePatient", model);
             }
 
-            // Validation 1: Check for exact duplicate record (excluding current ID)
-            if (bll.Exists(model.Patient, model.DrugName, model.Dosage, DateTime.Now, model.ID))
-            {
-                ModelState.AddModelError("", "Data already exist.");
-                return View("UpdatePatient", model);
-            }
-
-            // Validation 2: Check for unique medicine per day (excluding current ID)
-            if (bll.Exists(model.Patient, null, 0, DateTime.Now, model.ID, true))
-            {
-                ModelState.AddModelError("", "One medicine per day is allowed.");
-                return View("UpdatePatient", model);
-            }
-
             bll.UpdatePatient(model);
-            TempData["Message"] = "Patient updated successfully!";
+            TempData["Message"] = MessageUtil.UpdateSuccess;
             return RedirectToAction("ViewPatient");
         }
 
@@ -153,8 +166,39 @@ namespace AL.Areas.Admin.Controllers
         public ActionResult DeletePatient(int id)
         {
             bll.DeletePatient(id);
-            TempData["Message"] = "Patient deleted successfully!";
+            TempData["Message"] = MessageUtil.DeleteSuccess;
             return RedirectToAction("ViewPatient");
+        }
+
+        // Controller: PatientController.cs
+        [HttpPost]
+        public JsonResult ValidatePatient(string patient, string drugName, string dosage, int? id)
+        {
+            CultureInfo culture = new CultureInfo("en-US");
+            if (!decimal.TryParse(dosage, NumberStyles.Any, culture, out decimal parsedDosage))
+            {
+                return Json(new { success = false, message = "Dosage must be a valid positive number.", errorType = "invalidDosage" });
+            }
+
+            if (parsedDosage <= 0)
+            {
+                return Json(new { success = false, message = "Dosage must be a positive number.", errorType = "invalidDosage" });
+            }
+
+            // 1. Check for a full row existence (exact duplicate)
+            if (bll.Exists(patient, drugName, parsedDosage, DateTime.Now.Date, id))
+            {
+                return Json(new { success = false, message = MessageUtil.ExistingRecord, errorType = "alreadyExist" });
+            }
+
+            // 2. Check if the specific drug has already been prescribed to the patient today
+            if (bll.Exists(patient, drugName, null, DateTime.Now.Date, id, true))
+            {
+                return Json(new { success = false, message = MessageUtil.ExistingDrug, errorType = "uniqueDrug" });
+            }
+
+            // If both checks pass, validation succeeds
+            return Json(new { success = true });
         }
     }
 }

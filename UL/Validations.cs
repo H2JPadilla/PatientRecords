@@ -1,80 +1,84 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
+﻿using System;
+using System.Text.RegularExpressions;
 
-//namespace UL
-//{
-//    public class Validations
-//    {
-//        public static void Handle(Exception ex, out string message, out string errorField)
-//        {
-//            message = "Unexpected error.";
-//            errorField = "System";
+namespace UL
+{
+    public static class Validations
+    {
+        public static bool FillRequired(string text, string fieldName, out string message, out string errorField)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                message = $"{fieldName} is required.";
+                errorField = fieldName;
+                return false;
+            }
+            message = "";
+            errorField = "";
+            return true;
+        }
 
-//            if (ex is InvalidCastException)
-//            {
-//                message = MessageUtil.CastException; // e.g. "Invalid type conversion."
-//            }
-//            else if (ex is ArgumentOutOfRangeException)
-//            {
-//                message = MessageUtil.ArgumentOutOfRange; // e.g. "Value is out of range."
-//            }
-//            else if (ex is IndexOutOfRangeException)
-//            {
-//                message = MessageUtil.IndexOutOfRange; // e.g. "Index is out of range."
-//            }
-//            else if (ex is ArgumentNullException)
-//            {
-//                message = MessageUtil.NullException; // e.g. "null value detected."
-//            }
-//            else
-//            {
-//                message = MessageUtil.generalexception; // e.g. "An unexpected error occurred."
-//            }
-//        }
+        public static bool ValidatePositiveNumber(decimal? number, string fieldName, out string message, out string errorField)
+        {
+            if (!number.HasValue || number <= 0)
+            {
+                message = $"{fieldName} must be a positive number.";
+                errorField = fieldName;
+                return false;
+            }
+            message = "";
+            errorField = "";
+            return true;
+        }
 
-//        // Method to clean up extra spaces in a string
-//        public static string CleanSpaces(string input)
-//        {
-//            if (string.IsNullOrWhiteSpace(input))
-//                return string.Empty;
+        public static bool ValidateDecimalPlaces(decimal? number, string fieldName, out string message, out string errorField)
+        {
+            if (number.HasValue)
+            {
+                string s = number.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                if (s.Contains("."))
+                {
+                    int decimalPlaces = s.Split('.')[1].Length;
+                    if (decimalPlaces > 4)
+                    {
+                        message = $"{fieldName} can only have up to 4 decimal places.";
+                        errorField = fieldName;
+                        return false;
+                    }
+                }
+            }
+            message = "";
+            errorField = "";
+            return true;
+        }
 
-//            return string.Join(" ",
-//                input.Trim()
-//                     .Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
-//        }
+        public static string CleanSpaces(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+            return Regex.Replace(text.Trim(), @"\s+", " ");
+        }
 
-
-//        //Check if a required field is filled
-//        public static bool FillRequired(string value, string fieldName, out string message, out string errorField)
-//        {
-//            if (string.IsNullOrWhiteSpace(value))
-//            {
-//                message = MessageUtil.RequiredField; // or $"The {fieldName} field is required."
-//                errorField = fieldName;
-//                return false;
-//            }
-
-//            message = string.Empty;
-//            errorField = string.Empty;
-//            return true;
-//        }
-
-//        // ✅ Positive integer check
-//        public static bool ValidatePositiveNumber(decimal value, string fieldName, out string message, out string errorField)
-//        {
-//            if (value <= 0)
-//            {
-//                message = MessageUtil.NonInteger; // or $"The {fieldName} must be greater than zero."
-//                errorField = fieldName;
-//                return false;
-//            }
-
-//            message = string.Empty;
-//            errorField = string.Empty;
-//            return true;
-//        }
-//    }
-//}
+        public static void Handle(Exception ex, out string errorMessage, out string errorField)
+        {
+            if (ex is ArgumentException)
+            {
+                var argEx = ex as ArgumentException;
+                errorMessage = argEx.Message;
+                errorField = argEx.ParamName;
+            }
+            else if (ex is InvalidOperationException)
+            {
+                errorMessage = ex.Message;
+                errorField = "System";
+            }
+            else
+            {
+                errorMessage = "An unexpected error occurred. Please try again.";
+                errorField = "System";
+            }
+        }
+    }
+}

@@ -1,5 +1,4 @@
-﻿
-using EL;
+﻿using EL;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -23,7 +22,7 @@ namespace DAL.DAO
                         ID = (int)rdr["ID"],
                         Patient = rdr["Patient"].ToString(),
                         DrugName = rdr["DrugName"].ToString(),
-                        Dosage = Convert.ToInt32(rdr["Dosage"]),
+                        Dosage = Convert.ToDecimal(rdr["Dosage"]),
                         ModifiedDate = Convert.ToDateTime(rdr["ModifiedDate"])
                     });
                 }
@@ -46,7 +45,7 @@ namespace DAL.DAO
                         ID = (int)rdr["ID"],
                         Patient = rdr["Patient"].ToString(),
                         DrugName = rdr["DrugName"].ToString(),
-                        Dosage = Convert.ToInt32(rdr["Dosage"]),
+                        Dosage = Convert.ToDecimal(rdr["Dosage"]), // Corrected from Convert.ToInt32
                         ModifiedDate = Convert.ToDateTime(rdr["ModifiedDate"])
                     };
                 }
@@ -100,14 +99,14 @@ namespace DAL.DAO
             }
         }
 
-        public bool Exists(string patient, string drug, int? dosage, DateTime? date = null, int? excludeId = null, bool isUniqueDrugCheck = false)
+        public bool Exists(string patient, string drug, decimal? dosage, DateTime? date = null, int? excludeId = null, bool isUniqueDrugCheck = false) // Corrected from int? dosage
         {
             using (var con = GetConnection())
             {
                 string sql;
                 if (isUniqueDrugCheck)
                 {
-                    sql = "SELECT COUNT(1) FROM TablePrescription WHERE Patient = @Patient AND CAST(ModifiedDate AS DATE) = CAST(@Date AS DATE)";
+                    sql = "SELECT COUNT(1) FROM TablePrescription WHERE Patient = @Patient AND DrugName = @DrugName AND CAST(ModifiedDate AS DATE) = CAST(@Date AS DATE)";
                 }
                 else
                 {
@@ -121,10 +120,10 @@ namespace DAL.DAO
 
                 var cmd = new SqlCommand(sql, con);
                 cmd.Parameters.AddWithValue("@Patient", patient);
+                cmd.Parameters.AddWithValue("@DrugName", drug);
 
                 if (!isUniqueDrugCheck)
                 {
-                    cmd.Parameters.AddWithValue("@DrugName", drug);
                     cmd.Parameters.AddWithValue("@Dosage", dosage);
                 }
                 cmd.Parameters.AddWithValue("@Date", date.Value.Date);

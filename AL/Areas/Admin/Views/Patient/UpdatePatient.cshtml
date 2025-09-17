@@ -8,13 +8,30 @@
 @using (Html.BeginForm("UpdatePatient", "Patient", FormMethod.Post, new { id = "patientForm" }))
 {
     @Html.AntiForgeryToken()
-    @Html.ValidationSummary(false, "", new { @class = "text-danger" })
     @Html.HiddenFor(m => m.ID)
+    <div id="validation-summary" class="text-danger"></div>
 
-    @Html.Partial("Partial/PatientForm", Model)
+    <div class="mb-3">
+        <label for="Patient" class="form-label">Patient</label>
+        @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", placeholder = "Enter patient name", title = "Enter the patient's full name", tabindex = "1" })
+        <div id="patientError" class="invalid-feedback"></div>
+    </div>
+    <div class="mb-3">
+        <label for="DrugName" class="form-label">Drug Name</label>
+        @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", placeholder = "Enter drug name", title = "Enter the medicine or drug name", tabindex = "2" })
+        <div id="drugNameError" class="invalid-feedback"></div>
+    </div>
 
-    <button type="button" class="btn btn-warning" id="updateButton">Update</button>
-    <a href="@Url.Action("ViewPatient")" class="btn btn-secondary">Cancel</a>
+    <div class="mb-3">
+        <label for="Dosage" class="form-label">Dosage</label>
+        @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", tabindex = "3" })
+        @Html.ValidationMessageFor(model => model.Dosage, "", new { @class = "text-danger" })
+        <span id="dosageError" class="text-danger d-block"></span>
+    </div>
+
+    <button type="button" id="updateButton" class="btn btn-warning" tabindex="4">Update</button>
+    <button type="button" id="clearButton" class="btn btn-secondary" tabindex="5">Clear</button>
+    <a href="@Url.Action("ViewPatient")" class="btn btn-secondary" tabindex="6">Cancel</a>
 }
 
 <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
@@ -27,7 +44,7 @@
             <div class="modal-body">Do you want to update this patient record?</div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="confirmUpdateBtn">Yes, Update</button>
+                <button type="button" class="btn btn-primary" id="confirmUpdateBtn">Yes, Update</button>
             </div>
         </div>
     </div>
@@ -38,14 +55,76 @@
         document.addEventListener('DOMContentLoaded', function () {
             var updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
 
-            document.getElementById('updateButton').addEventListener('click', function () {
-                if (validateForm()) {
+            // This event listener removes the error indication when the user starts typing.
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', function() {
+                    this.classList.remove('is-invalid');
+                    const errorElement = document.getElementById(this.id + 'Error');
+                    if (errorElement) {
+                        errorElement.innerHTML = '';
+                        errorElement.style.display = 'none';
+                    }
+                });
+            });
+
+            document.getElementById('updateButton').addEventListener('click', async function () {
+                const patient = document.getElementById('Patient').value;
+                const drugName = document.getElementById('DrugName').value;
+                const dosage = document.getElementById('Dosage').value;
+                const id = document.getElementById('ID').value;
+
+                clearErrors();
+
+                if (!validateForm()) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('@Url.Action("ValidatePatient", "Patient")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.getElementsByName('__RequestVerificationToken')[0].value
+                        },
+                        body: JSON.stringify({ patient, drugName, dosage, id })
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        const validationSummary = document.getElementById('validation-summary');
+                        validationSummary.innerHTML = `<ul class="list-unstyled"><li>${data.message}</li></ul>`;
+
+                        // Apply 'is-invalid' class based on server-side error
+                        if (data.errorType === 'uniqueDrug') {
+                            document.getElementById('Patient').classList.add('is-invalid');
+                            document.getElementById('DrugName').classList.add('is-invalid');
+                        } else if (data.errorType === 'alreadyExist') {
+                            document.getElementById('DrugName').classList.add('is-invalid');
+                        } else if (data.errorType === 'invalidDosage') {
+                             document.getElementById('Dosage').classList.add('is-invalid');
+                        }
+                        return;
+                    }
+
                     updateModal.show();
+                } catch (error) {
+                    console.error('Validation failed:', error);
                 }
             });
 
             document.getElementById('confirmUpdateBtn').addEventListener('click', function () {
                 document.getElementById('patientForm').submit();
+            });
+
+            document.getElementById('clearButton').addEventListener('click', function() {
+                document.getElementById('Patient').value = '';
+                document.getElementById('DrugName').value = '';
+                document.getElementById('Dosage').value = '';
+                clearErrors();
+                setTimeout(() => {
+                    document.getElementById('Patient').focus();
+                }, 100);
             });
 
             function validateForm() {
@@ -54,21 +133,49 @@
                 const drugInput = document.getElementById('DrugName');
                 const dosageInput = document.getElementById('Dosage');
 
-                // Clear previous errors
-                document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
                 if (patientInput.value.trim() === '') {
                     patientInput.classList.add('is-invalid');
+                    document.getElementById('patientError').innerHTML = 'Patient name is required.';
+                    document.getElementById('patientError').style.display = 'block';
+                    isValid = false;
+                } else if (!/^[a-zA-Z\s'-]+$/.test(patientInput.value) || patientInput.value.length > 50) {
+                    patientInput.classList.add('is-invalid');
+                    document.getElementById('patientError').innerHTML = 'Patient name must be alphanumeric with hyphens, apostrophes, spaces and max 50 characters.';
+                    document.getElementById('patientError').style.display = 'block';
                     isValid = false;
                 }
+
                 if (drugInput.value.trim() === '') {
                     drugInput.classList.add('is-invalid');
+                    document.getElementById('drugNameError').innerHTML = 'Drug name is required.';
+                    document.getElementById('drugNameError').style.display = 'block';
+                    isValid = false;
+                } else if (!/^[a-zA-Z0-9\s]+$/.test(drugInput.value) || drugInput.value.length > 50) {
+                    drugInput.classList.add('is-invalid');
+                    document.getElementById('drugNameError').innerHTML = 'Drug name must be alphanumeric with spaces and max 50 characters.';
+                    document.getElementById('drugNameError').style.display = 'block';
                     isValid = false;
                 }
-                const dosageValue = parseInt(dosageInput.value, 10);
-                if (dosageInput.value.trim() === '' || isNaN(dosageValue) || dosageValue <= 0) {
+
+                const dosageValue = parseFloat(dosageInput.value);
+                if (dosageInput.value.trim() === '') {
                     dosageInput.classList.add('is-invalid');
+                    document.getElementById('dosageError').innerHTML = 'Dosage is required.';
+                    document.getElementById('dosageError').style.display = 'block';
                     isValid = false;
+                } else if (isNaN(dosageValue) || dosageValue <= 0) {
+                    dosageInput.classList.add('is-invalid');
+                    document.getElementById('dosageError').innerHTML = 'Dosage must be a positive number.';
+                    document.getElementById('dosageError').style.display = 'block';
+                    isValid = false;
+                } else {
+                    const decimalPlaces = (dosageInput.value.split('.')[1] || '').length;
+                    if (decimalPlaces > 4) {
+                        dosageInput.classList.add('is-invalid');
+                        document.getElementById('dosageError').innerHTML = 'Dosage can only have up to 4 decimal places.';
+                        document.getElementById('dosageError').style.display = 'block';
+                        isValid = false;
+                    }
                 }
 
                 if (!isValid) {
@@ -80,12 +187,19 @@
                 return isValid;
             }
 
-            // Remove red highlight when user starts typing
-            document.querySelectorAll('input').forEach(input => {
-                input.addEventListener('input', function () {
-                    this.classList.remove('is-invalid');
+            function clearErrors() {
+                document.querySelectorAll('.is-invalid').forEach(el => {
+                    el.classList.remove('is-invalid');
                 });
-            });
+                document.querySelectorAll('.invalid-feedback, .text-danger').forEach(el => {
+                     // Check if the element is not the validation summary before clearing
+                    if (el.id !== 'validation-summary') {
+                         el.innerHTML = '';
+                         el.style.display = 'none';
+                    }
+                });
+                document.getElementById('validation-summary').innerHTML = '';
+            }
         });
     </script>
 }

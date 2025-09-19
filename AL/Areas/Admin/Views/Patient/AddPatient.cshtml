@@ -14,18 +14,17 @@
 
         <div class="col-12">
             <label for="Patient" class="form-label">Patient</label>
-            @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", id = "Patient" })
+            @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", id = "Patient", title = "Enter the name of the patient", placeholder = "Enter patient name" })
             <span id="patientError" class="text-danger d-block"></span>
         </div>
         <div class="col-12">
             <label for="DrugName" class="form-label">Drug Name</label>
-            @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", id = "DrugName" })
+            @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", id = "DrugName", title = "Enter the name of the drug/medicine", placeholder = "Enter drug name" })
             <span id="drugNameError" class="text-danger d-block"></span>
         </div>
         <div class="col-12">
             <label for="Dosage" class="form-label">Dosage</label>
-            @* Corrected input type to "number" with "step" attribute *@
-            @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage" })
+            @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", title = "Enter the dosage intake" })
             <span id="dosageError" class="text-danger d-block"></span>
         </div>
         <div class="col-12 mt-3">
@@ -36,6 +35,7 @@
     </div>
 }
 
+@*Confirmation Modal*@
 <div class="modal fade" id="saveModal" tabindex="-1" aria-labelledby="saveModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -52,13 +52,16 @@
     </div>
 </div>
 
+
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/Areas/Admin/Content/JavaScript/jquery-3.6.0.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('Patient').focus();
+
             var saveModal = new bootstrap.Modal(document.getElementById('saveModal'));
 
-            // This event listener removes the error indication when the user starts typing.
+            //removes the error indication when the user starts typing.
             document.querySelectorAll('input').forEach(input => {
                 input.addEventListener('input', function() {
                     this.classList.remove('is-invalid');
@@ -66,7 +69,16 @@
                 });
             });
 
-            // Function to clear all validation errors and invalid classes
+            // remove leading zeros from the Dosage field
+            document.getElementById('Dosage').addEventListener('input', function() {
+                let value = this.value;
+                // Check if the value starts with '0' but is not just '0' itself or a decimal like '0.'
+                if (value.startsWith('0') && value.length > 1 && value.charAt(1) !== '.') {
+                    this.value = parseFloat(value);
+                }
+            });
+
+            // clear all validation errors and invalid classes
             function clearErrors() {
                 document.getElementById('patientError').textContent = '';
                 document.getElementById('drugNameError').textContent = '';
@@ -85,7 +97,7 @@
 
                 clearErrors();
 
-                // Patient Name validation
+                // Patient validation
                 if (patient.value.trim() === "") {
                     document.getElementById('patientError').textContent = "Patient name is required.";
                     patient.classList.add('is-invalid');
@@ -109,16 +121,29 @@
 
                 // Corrected Dosage validation logic
                 const dosageValue = dosage.value.trim();
+                const parsedDosage = parseFloat(dosageValue);
 
-                // Check if the input is empty
+                // Check if the input is empty / non integer / out of range / more than 4 decimal places
                 if (dosageValue === "") {
                     document.getElementById('dosageError').textContent = "Dosage is required.";
                     dosage.classList.add('is-invalid');
                     isValid = false;
-                } else if (!/^[0-9]+(\.[0-9]{1,4})?$/.test(dosageValue) || parseFloat(dosageValue) <= 0) {
-                    document.getElementById('dosageError').textContent = "Dosage must be a positive number with up to 4 decimal places.";
+                } else if (isNaN(parsedDosage) || parsedDosage <= 0) {
+                    document.getElementById('dosageError').textContent = "Dosage must be a positive number.";
                     dosage.classList.add('is-invalid');
                     isValid = false;
+                } else if (parsedDosage > 999.9999) {
+                    document.getElementById('dosageError').textContent = "Dosage cannot exceed 999.9999.";
+                    dosage.classList.add('is-invalid');
+                    isValid = false;
+                }
+                else {
+                    const decimalPlaces = (dosageValue.split('.')[1] || '').length;
+                    if (decimalPlaces > 4) {
+                        document.getElementById('dosageError').textContent = "Dosage can only have up to 4 decimal places.";
+                        dosage.classList.add('is-invalid');
+                        isValid = false;
+                    }
                 }
 
                 // If any validation failed, set focus to the first invalid field
@@ -128,11 +153,10 @@
                         firstInvalid.focus();
                     }
                 }
-
                 return isValid;
             }
 
-            // Event listener for the "Save" button to trigger validation
+            // "Save" button to trigger validation
             document.getElementById('saveButton').addEventListener('click', async function (e) {
                 e.preventDefault();
 
@@ -187,7 +211,8 @@
             });
 
             // Fix for the "Clear" button functionality
-            document.getElementById('clearButton').addEventListener('click', function() {
+            document.getElementById('clearButton').addEventListener('click', function () {
+                document.getElementById('Patient').focus();
                 document.getElementById('Patient').value = '';
                 document.getElementById('DrugName').value = '';
                 document.getElementById('Dosage').value = '';

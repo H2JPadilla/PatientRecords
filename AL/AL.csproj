@@ -98,9 +98,12 @@
     <Content Include="Areas\Admin\Content\CSS\all.min.css" />
     <Content Include="Areas\Admin\Content\CSS\bootstrap.min.css" />
     <Content Include="Areas\Admin\Content\CSS\footer.css" />
+    <Content Include="Areas\Admin\Content\CSS\homeindex.css" />
     <Content Include="Areas\Admin\Content\CSS\icheck-bootstrap.min.css" />
     <Content Include="Areas\Admin\Content\Images\1737991843636.jfif" />
     <Content Include="Areas\Admin\Content\Images\istockphoto-1766603296-612x612.jpg" />
+    <Content Include="Areas\Admin\Content\Images\pexels-eye4dtail-298611.jpg" />
+    <Content Include="Areas\Admin\Content\Images\pexels-tima-miroshnichenko-5355709.jpg" />
     <Content Include="Areas\Admin\Content\JavaScript\adminlte.min.js" />
     <Content Include="Areas\Admin\Content\JavaScript\bootstrap.bundle.min.js" />
     <Content Include="Areas\Admin\Content\JavaScript\filter.js" />

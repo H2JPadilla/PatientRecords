@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Runtime.InteropServices;
 
 namespace DAL.DAO
 {
@@ -59,7 +60,6 @@ namespace DAL.DAO
             {
                 var cmd = new SqlCommand(
                     "INSERT INTO TablePrescription (Patient, DrugName, Dosage, ModifiedDate) VALUES (@Patient, @DrugName, @Dosage, @ModifiedDate)", con);
-
                 cmd.Parameters.AddWithValue("@Patient", patient.Patient);
                 cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);
                 cmd.Parameters.AddWithValue("@Dosage", patient.Dosage);

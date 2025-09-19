@@ -7,25 +7,30 @@ using EL;
 using UL;
 using System.Globalization;
 
-
+    
 namespace AL.Areas.Admin.Controllers
 {
     public class PatientController : Controller
     {
+        // Create instance of BLL
         private readonly PatientBLL bll = new PatientBLL();
 
-        // Standard View: Used for the initial page load with filtering and pagination
+        // View with pagination
         public ActionResult ViewPatient(
             string patient = "",
             string drug = "",
             decimal? dosage = null,
             DateTime? date = null,
             int page = 1,
-            int pageSize = 5)
+            int pageSize = 10)
         {
+            // Trim leading and trailing spaces from search parameters
+            if (patient != null) patient = Validations.CleanSpaces(patient);
+            if (drug != null) drug = Validations.CleanSpaces(drug);
+
             var patients = bll.GetPatients();
 
-            // Filtering logic is applied here
+            // Filtering logic 
             if (!string.IsNullOrEmpty(patient))
                 patients = patients
                     .Where(p => p.Patient != null && p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -57,7 +62,7 @@ namespace AL.Areas.Admin.Controllers
             return View(pagedPatients);
         }
 
-        // AJAX Action: Returns JSON for live search
+        //Returns JSON for live search
         [HttpGet]
         public JsonResult SearchPatients(
             string patient = "",
@@ -65,8 +70,12 @@ namespace AL.Areas.Admin.Controllers
             decimal? dosage = null,
             DateTime? date = null,
             int page = 1,
-            int pageSize = 5)
+            int pageSize = 10)
         {
+            // Trim leading and trailing spaces from search parameters
+            if (patient != null) patient = Validations.CleanSpaces(patient);
+            if (drug != null) drug = Validations.CleanSpaces(drug);
+
             var patients = bll.GetPatients();
 
             if (!string.IsNullOrEmpty(patient))
@@ -91,7 +100,7 @@ namespace AL.Areas.Admin.Controllers
 
             int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
 
-            // Explicitly format the ModifiedDate to a string
+            //format the ModifiedDate to a string
             var formattedPatients = pagedPatients.Select(p => new
             {
                 p.ID,
@@ -170,7 +179,7 @@ namespace AL.Areas.Admin.Controllers
             return RedirectToAction("ViewPatient");
         }
 
-        // Controller: PatientController.cs
+        // Validate that will be called via AJAX before form submission
         [HttpPost]
         public JsonResult ValidatePatient(string patient, string drugName, string dosage, int? id)
         {
@@ -185,13 +194,13 @@ namespace AL.Areas.Admin.Controllers
                 return Json(new { success = false, message = "Dosage must be a positive number.", errorType = "invalidDosage" });
             }
 
-            // 1. Check for a full row existence (exact duplicate)
+            // 1. Check for a full row existence (exact duplicate) == Jabes, Alaxan, 250, 9/19/2025 == Jabes, Alaxan, 250, 9/19/2025 (Return error: Existing record)
             if (bll.Exists(patient, drugName, parsedDosage, DateTime.Now.Date, id))
             {
                 return Json(new { success = false, message = MessageUtil.ExistingRecord, errorType = "alreadyExist" });
             }
 
-            // 2. Check if the specific drug has already been prescribed to the patient today
+            // 2. Check if the specific drug has already been prescribed to the patient today == Jabes, Alaxan, 300, 9.19.2025 ==  Jabes, Alaxan, 200, 9.19.2025 == Patient = Patient, Drugname = Drugname, Dosage != Dosage, Date = DateNow (Return error: Existing drug for today) 
             if (bll.Exists(patient, drugName, null, DateTime.Now.Date, id, true))
             {
                 return Json(new { success = false, message = MessageUtil.ExistingDrug, errorType = "uniqueDrug" });

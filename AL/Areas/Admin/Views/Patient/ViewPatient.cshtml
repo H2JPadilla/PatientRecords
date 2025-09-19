@@ -1,6 +1,8 @@
 ﻿@model List<EL.PatientEntity>
 @{
     ViewBag.Title = "Patient List";
+    // Define a counter variable for the initial load
+    int counter = (ViewBag.Page - 1) * ViewBag.PageSize + 1;
 }
 
 <h2>Patient List</h2>
@@ -17,7 +19,7 @@
     <div class="row g-4">
         <div class="col-md-2">
             <label for="patientFilter" class="form-label">Patient</label>
-            <input type="text" id="patientFilter" name="patient" class="form-control" value="@ViewBag.Patient" placeholder="Patient Name">
+            <input type="text" id="patientFilter" name="patient" class="form-control" value="@ViewBag.Patient" placeholder="Patient Name"> @*@ViewBag.Patient == This is how the search form "remembers" what the user typed after the page reloads.*@
         </div>
         <div class="col-md-2">
             <label for="drugFilter" class="form-label">Drug Name</label>
@@ -31,21 +33,21 @@
             <label for="dateFilter" class="form-label">Modified Date</label>
             <input type="date" id="dateFilter" name="date" class="form-control" value="@ViewBag.Date">
         </div>
-        <div class="col-md-1 d-flex align-items-end">
-            <button type="button" id="resetButton" class="btn btn-secondary w-100">Reset</button>
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-            <a href="@Url.Action("AddPatient", "Patient")" class="btn btn-sm btn-success">
+
+        <div class="col-md-4 d-flex align-items-end justify-content-end">
+            <button type="button" id="resetButton" class="btn btn-secondary me-2">Reset</button>
+            <a href="@Url.Action("AddPatient", "Patient")" class="btn btn-success">
                 + Add Patient
             </a>
         </div>
+
     </div>
 </form>
 
 <table class="table table-striped table-bordered">
     <thead>
         <tr>
-            <th>ID</th>
+            <th>No.</th>
             <th>Patient</th>
             <th>Drug Name</th>
             <th>Dosage</th>
@@ -58,7 +60,7 @@
         @foreach (var patient in Model)
         {
             <tr>
-                <td>@patient.ID</td>
+                <td data-id="@patient.ID">@(counter++)</td>
                 <td>@patient.Patient</td>
                 <td>@patient.DrugName</td>
                 <td>@patient.Dosage.ToString("F2")</td>
@@ -105,6 +107,7 @@
 
 @section Scripts {
     <script>
+        //USED AJAX FOR FUNCTIONS LIKE SEARCH, DELETE, PAGINATION
         document.addEventListener('DOMContentLoaded', function () {
             let timeout = null;
             const searchInputs = document.querySelectorAll('#searchForm input');
@@ -194,8 +197,8 @@
 
             // The main AJAX function for searching
             function searchPatients(page = 1) {
-                const patient = document.getElementById('patientFilter').value;
-                const drug = document.getElementById('drugFilter').value;
+                const patient = document.getElementById('patientFilter').value.trim();
+                const drug = document.getElementById('drugFilter').value.trim();
                 const dosage = document.getElementById('dosageFilter').value;
                 const date = document.getElementById('dateFilter').value;
 
@@ -220,7 +223,7 @@
                     return response.json();
                 })
                 .then(data => {
-                    updateTable(data.patients);
+                    updateTable(data.patients, data.page, data.pageSize);
                     updatePagination(data.totalPages, data.page);
 
                     // Keep the date input field value after the search
@@ -232,22 +235,24 @@
             }
 
             // Update the table with new data from the AJAX response
-            function updateTable(patients) {
+            function updateTable(patients, page, pageSize) {
                 tableBody.innerHTML = '';
                 if (patients.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No records found</td></tr>';
                     return;
                 }
 
+                let counter = (page - 1) * pageSize + 1;
+
                 patients.forEach(patient => {
                     const row = document.createElement('tr');
-                    const modifiedDate = patient.ModifiedDate;
+
                     row.innerHTML = `
-                        <td>${patient.ID}</td>
+                        <td data-id="${patient.ID}">${counter++}</td>
                         <td>${patient.Patient}</td>
                         <td>${patient.DrugName}</td>
                         <td>${patient.Dosage.toFixed(2)}</td>
-                        <td>${modifiedDate}</td>
+                        <td>${patient.ModifiedDate}</td>
                         <td>
                             <a href="/Admin/Patient/UpdatePatient/${patient.ID}" class="btn btn-sm btn-primary">Edit</a>
                             <a href="#" class="btn btn-sm btn-danger delete-btn" data-id="${patient.ID}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
@@ -257,7 +262,7 @@
                 });
             }
 
-            // Update the pagination links with new data
+            // Update the pagination links with new data based on search
             function updatePagination(totalPages, currentPage) {
                 const ul = document.createElement('ul');
                 ul.className = 'pagination';
@@ -285,17 +290,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // ... (your existing code for search, delete modal, etc.) ...
-
-            // Code to make the success alert disappear
+            // alert disappear
             const successAlert = document.querySelector('.alert.alert-success');
             if (successAlert) {
                 setTimeout(() => {
-                    // Use a fade-out animation for a smoother effect
                     successAlert.style.transition = 'opacity 0.5s ease-out';
                     successAlert.style.opacity = '0';
 
-                    // Remove the element from the DOM after the transition
                     setTimeout(() => successAlert.remove(), 500);
                 }, 3000); // 3000 milliseconds = 3 seconds
             }

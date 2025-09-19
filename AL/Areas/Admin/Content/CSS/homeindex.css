@@ -1,0 +1,32 @@
+﻿#carouselExample {
+    max-width: 900px; /* Adjust this to control the carousel's width */
+    margin: 0 auto; /* Centers the carousel horizontally */
+}
+
+#carouselExample .carousel-item img {
+    height: auto; /* Allow the height to adjust proportionally */
+    width: 100%; /* Ensure the image fills the width of the container */
+    padding-top: 20px;
+}
+
+
+/* Styles for the new description section */
+.description-section {
+    padding: 100px 50px;
+    text-align: center;
+    background-color: #f8f9fa; /* Light gray background to make it stand out */
+    margin-top: 30px; /* Add some space between the carousel and the description */
+}
+
+    .description-section h2 {
+        margin-bottom: 20px;
+        color: #343a40;
+    }
+
+    .description-section p {
+        max-width: 1000px;
+        margin: 0 auto;
+        line-height: 1.6;
+        color: #6c757d;
+    }
+

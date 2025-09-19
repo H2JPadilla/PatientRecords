@@ -61,23 +61,59 @@ namespace UL
             return Regex.Replace(text.Trim(), @"\s+", " ");
         }
 
-        public static void Handle(Exception ex, out string errorMessage, out string errorField)
+       public static void Handle(Exception ex, out string errorMessage, out string errorField)
         {
-            if (ex is ArgumentException)
+            if (ex is ArgumentNullException argNullEx)
             {
-                var argEx = ex as ArgumentException;
-                errorMessage = argEx.Message;
-                errorField = argEx.ParamName;
+                errorMessage = "A required argument was null: " + argNullEx.Message;
+                errorField = argNullEx.ParamName ?? "Unknown";
+            }
+            else if (ex is ArgumentOutOfRangeException argRangeEx)
+            {
+                errorMessage = "Argument out of range: " + argRangeEx.Message;
+                errorField = argRangeEx.ParamName ?? "Unknown";
+            }
+            else if (ex is ArgumentException argEx)
+            {
+                errorMessage = "Invalid argument: " + argEx.Message;
+                errorField = argEx.ParamName ?? "Unknown";
+            }
+            else if (ex is FormatException)
+            {
+                errorMessage = "Invalid format: " + ex.Message;
+                errorField = "Input";
+            }
+            else if (ex is InvalidCastException)
+            {
+                errorMessage = "Invalid type conversion: " + ex.Message;
+                errorField = "System";
             }
             else if (ex is InvalidOperationException)
             {
-                errorMessage = ex.Message;
+                errorMessage = "Invalid operation: " + ex.Message;
                 errorField = "System";
+            }
+            else if (ex is NullReferenceException)
+            {
+                errorMessage = "Object reference not set to an instance of an object.";
+                errorField = "System";
+            }
+            else if (ex is IndexOutOfRangeException)
+            {
+                errorMessage = "Index out of range: " + ex.Message;
+                errorField = "Collection";
+            }
+            
+            else if (ex is OverflowException)
+            {
+                errorMessage = "Numeric overflow occurred.";
+                errorField = "Math";
             }
             else
             {
                 errorMessage = "An unexpected error occurred. Please try again.";
                 errorField = "System";
+            
             }
         }
     }

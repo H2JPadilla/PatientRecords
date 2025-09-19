@@ -9,7 +9,9 @@ namespace UL
         public const string UpdateSuccess = "Record has been updated successfully!";
         public const string DeleteSuccess = "Record has been deleted successfully!";
         public const string RequiredField = "This field is required.";
-        public const string NonInteger = "Enter a positive number.";
+        public const string NonInteger = "Dosage must be a positive number";
+        public const string LimitRange = "Dosage must be between 1 - 999.9999";
+
         public const string RecordNotFound = "Record not found.";
 
         //BACK END MESSAGE

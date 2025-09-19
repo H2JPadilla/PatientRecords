@@ -13,18 +13,18 @@
 
     <div class="mb-3">
         <label for="Patient" class="form-label">Patient</label>
-        @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", placeholder = "Enter patient name", title = "Enter the patient's full name", tabindex = "1" })
+        @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", placeholder = "Enter patient name", title = "Enter the name of the patient", tabindex = "1" })
         <div id="patientError" class="invalid-feedback"></div>
     </div>
     <div class="mb-3">
         <label for="DrugName" class="form-label">Drug Name</label>
-        @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", placeholder = "Enter drug name", title = "Enter the medicine or drug name", tabindex = "2" })
+        @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", placeholder = "Enter drug name", title = "Enter the name of the drug/medicine", tabindex = "2" })
         <div id="drugNameError" class="invalid-feedback"></div>
     </div>
 
     <div class="mb-3">
         <label for="Dosage" class="form-label">Dosage</label>
-        @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", tabindex = "3" })
+        @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", tabindex = "3", title = "Enter the dosage intake" })
         @Html.ValidationMessageFor(model => model.Dosage, "", new { @class = "text-danger" })
         <span id="dosageError" class="text-danger d-block"></span>
     </div>
@@ -52,110 +52,120 @@
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
+        document.addEventListener('DOMContentLoaded', function () {
+            var updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
+            document.getElementById('Patient').focus();
 
-            // This event listener removes the error indication when the user starts typing.
-            document.querySelectorAll('input').forEach(input => {
-                input.addEventListener('input', function() {
-                    this.classList.remove('is-invalid');
-                    const errorElement = document.getElementById(this.id + 'Error');
-                    if (errorElement) {
-                        errorElement.innerHTML = '';
-                        errorElement.style.display = 'none';
-                    }
-                });
-            });
 
-            document.getElementById('updateButton').addEventListener('click', async function () {
-                const patient = document.getElementById('Patient').value;
-                const drugName = document.getElementById('DrugName').value;
-                const dosage = document.getElementById('Dosage').value;
-                const id = document.getElementById('ID').value;
+            // removes the error indication when the user starts typing.
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', function() {
+                    this.classList.remove('is-invalid');
+                    const errorElement = document.getElementById(this.id + 'Error');
+                    if (errorElement) {
+                        errorElement.innerHTML = '';
+                        errorElement.style.display = 'none';
+                    }
+                });
+            });
 
-                clearErrors();
-
-                if (!validateForm()) {
-                    return;
-                }
-
-                try {
-                    const response = await fetch('@Url.Action("ValidatePatient", "Patient")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.getElementsByName('__RequestVerificationToken')[0].value
-                        },
-                        body: JSON.stringify({ patient, drugName, dosage, id })
-                    });
-
-                    const data = await response.json();
-
-                    if (!data.success) {
-                        const validationSummary = document.getElementById('validation-summary');
-                        validationSummary.innerHTML = `<ul class="list-unstyled"><li>${data.message}</li></ul>`;
-
-                        // Apply 'is-invalid' class based on server-side error
-                        if (data.errorType === 'uniqueDrug') {
-                            document.getElementById('Patient').classList.add('is-invalid');
-                            document.getElementById('DrugName').classList.add('is-invalid');
-                        } else if (data.errorType === 'alreadyExist') {
-                            document.getElementById('DrugName').classList.add('is-invalid');
-                        } else if (data.errorType === 'invalidDosage') {
-                             document.getElementById('Dosage').classList.add('is-invalid');
-                        }
-                        return;
-                    }
-
-                    updateModal.show();
-                } catch (error) {
-                    console.error('Validation failed:', error);
+            // remove leading zeros from the Dosage field
+            document.getElementById('Dosage').addEventListener('input', function() {
+                let value = this.value;
+                // Check if the value starts with '0' but is not just '0' itself or a decimal like '0.'
+                if (value.startsWith('0') && value.length > 1 && value.charAt(1) !== '.') {
+                    this.value = parseFloat(value);
                 }
             });
 
-            document.getElementById('confirmUpdateBtn').addEventListener('click', function () {
-                document.getElementById('patientForm').submit();
-            });
+            document.getElementById('updateButton').addEventListener('click', async function () {
+                const patient = document.getElementById('Patient').value;
+                const drugName = document.getElementById('DrugName').value;
+                const dosage = document.getElementById('Dosage').value;
+                const id = document.getElementById('ID').value;
 
-            document.getElementById('clearButton').addEventListener('click', function() {
-                document.getElementById('Patient').value = '';
-                document.getElementById('DrugName').value = '';
-                document.getElementById('Dosage').value = '';
-                clearErrors();
-                setTimeout(() => {
-                    document.getElementById('Patient').focus();
-                }, 100);
-            });
+                clearErrors();
 
-            function validateForm() {
-                let isValid = true;
-                const patientInput = document.getElementById('Patient');
-                const drugInput = document.getElementById('DrugName');
-                const dosageInput = document.getElementById('Dosage');
+                if (!validateForm()) {
+                    return;
+                }
 
-                if (patientInput.value.trim() === '') {
-                    patientInput.classList.add('is-invalid');
-                    document.getElementById('patientError').innerHTML = 'Patient name is required.';
-                    document.getElementById('patientError').style.display = 'block';
-                    isValid = false;
-                } else if (!/^[a-zA-Z\s'-]+$/.test(patientInput.value) || patientInput.value.length > 50) {
-                    patientInput.classList.add('is-invalid');
-                    document.getElementById('patientError').innerHTML = 'Patient name must be alphanumeric with hyphens, apostrophes, spaces and max 50 characters.';
-                    document.getElementById('patientError').style.display = 'block';
-                    isValid = false;
-                }
+                try {
+                    const response = await fetch('@Url.Action("ValidatePatient", "Patient")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.getElementsByName('__RequestVerificationToken')[0].value
+                        },
+                        body: JSON.stringify({ patient, drugName, dosage, id })
+                    });
 
-                if (drugInput.value.trim() === '') {
-                    drugInput.classList.add('is-invalid');
-                    document.getElementById('drugNameError').innerHTML = 'Drug name is required.';
-                    document.getElementById('drugNameError').style.display = 'block';
-                    isValid = false;
-                } else if (!/^[a-zA-Z0-9\s]+$/.test(drugInput.value) || drugInput.value.length > 50) {
-                    drugInput.classList.add('is-invalid');
-                    document.getElementById('drugNameError').innerHTML = 'Drug name must be alphanumeric with spaces and max 50 characters.';
-                    document.getElementById('drugNameError').style.display = 'block';
-                    isValid = false;
-                }
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        const validationSummary = document.getElementById('validation-summary');
+                        validationSummary.innerHTML = `<ul class="list-unstyled"><li>${data.message}</li></ul>`;
+
+                        // Apply 'is-invalid' class based on server-side error
+                        if (data.errorType === 'uniqueDrug') {
+                            document.getElementById('Patient').classList.add('is-invalid');
+                            document.getElementById('DrugName').classList.add('is-invalid');
+                        } else if (data.errorType === 'alreadyExist') {
+                            document.getElementById('DrugName').classList.add('is-invalid');
+                        } else if (data.errorType === 'invalidDosage') {
+                             document.getElementById('Dosage').classList.add('is-invalid');
+                        }
+                        return;
+                    }
+
+                    updateModal.show();
+                } catch (error) {
+                    console.error('Validation failed:', error);
+                }
+            });
+
+            document.getElementById('confirmUpdateBtn').addEventListener('click', function () {
+                document.getElementById('patientForm').submit();
+            });
+
+            document.getElementById('clearButton').addEventListener('click', function() {
+                document.getElementById('Patient').value = '';
+                document.getElementById('DrugName').value = '';
+                document.getElementById('Dosage').value = '';
+                clearErrors();
+                setTimeout(() => {
+                    document.getElementById('Patient').focus();
+                }, 100);
+            });
+
+            function validateForm() {
+                let isValid = true;
+                const patientInput = document.getElementById('Patient');
+                const drugInput = document.getElementById('DrugName');
+                const dosageInput = document.getElementById('Dosage');
+
+                if (patientInput.value.trim() === '') {
+                    patientInput.classList.add('is-invalid');
+                    document.getElementById('patientError').innerHTML = 'Patient name is required.';
+                    document.getElementById('patientError').style.display = 'block';
+                    isValid = false;
+                } else if (!/^[a-zA-Z\s'-]+$/.test(patientInput.value) || patientInput.value.length > 50) {
+                    patientInput.classList.add('is-invalid');
+                    document.getElementById('patientError').innerHTML = 'Patient name must be alphanumeric with hyphens, apostrophes, spaces and max 50 characters.';
+                    document.getElementById('patientError').style.display = 'block';
+                    isValid = false;
+                }
+
+                if (drugInput.value.trim() === '') {
+                    drugInput.classList.add('is-invalid');
+                    document.getElementById('drugNameError').innerHTML = 'Drug name is required.';
+                    document.getElementById('drugNameError').style.display = 'block';
+                    isValid = false;
+                } else if (!/^[a-zA-Z0-9\s]+$/.test(drugInput.value) || drugInput.value.length > 50) {
+                    drugInput.classList.add('is-invalid');
+                    document.getElementById('drugNameError').innerHTML = 'Drug name must be alphanumeric with spaces and max 50 characters.';
+                    isValid = false;
+                }
 
                 const dosageValue = parseFloat(dosageInput.value);
                 if (dosageInput.value.trim() === '') {
@@ -168,6 +178,11 @@
                     document.getElementById('dosageError').innerHTML = 'Dosage must be a positive number.';
                     document.getElementById('dosageError').style.display = 'block';
                     isValid = false;
+                } else if (dosageValue > 999.9999) {
+                    dosageInput.classList.add('is-invalid');
+                    document.getElementById('dosageError').innerHTML = 'Dosage cannot exceed 999.9999.';
+                    document.getElementById('dosageError').style.display = 'block';
+                    isValid = false;
                 } else {
                     const decimalPlaces = (dosageInput.value.split('.')[1] || '').length;
                     if (decimalPlaces > 4) {
@@ -178,28 +193,28 @@
                     }
                 }
 
-                if (!isValid) {
-                    const firstInvalid = document.querySelector('.is-invalid');
-                    if (firstInvalid) {
-                        firstInvalid.focus();
-                    }
-                }
-                return isValid;
-            }
+                if (!isValid) {
+                    const firstInvalid = document.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.focus();
+                    }
+                }
+                return isValid;
+            }
 
-            function clearErrors() {
-                document.querySelectorAll('.is-invalid').forEach(el => {
-                    el.classList.remove('is-invalid');
-                });
-                document.querySelectorAll('.invalid-feedback, .text-danger').forEach(el => {
-                     // Check if the element is not the validation summary before clearing
-                    if (el.id !== 'validation-summary') {
-                         el.innerHTML = '';
-                         el.style.display = 'none';
-                    }
-                });
-                document.getElementById('validation-summary').innerHTML = '';
-            }
-        });
+            function clearErrors() {
+                document.querySelectorAll('.is-invalid').forEach(el => {
+                    el.classList.remove('is-invalid');
+                });
+                document.querySelectorAll('.invalid-feedback, .text-danger').forEach(el => {
+                     // Check if the element is not the validation summary before clearing
+                    if (el.id !== 'validation-summary') {
+                         el.innerHTML = '';
+                         el.style.display = 'none';
+                    }
+                });
+                document.getElementById('validation-summary').innerHTML = '';
+            }
+        });
     </script>
 }

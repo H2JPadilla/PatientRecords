@@ -2,15 +2,22 @@
     ViewBag.Title = "Index";
 }
 
-<div id="carouselExample" class="carousel slide">
+<link href="~/Areas/Admin/Content/CSS/homeindex.css" rel="stylesheet" />
+
+<div id="carouselExample" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
     <div class="carousel-inner">
+
         <div class="carousel-item active">
-            <img src="~/Areas/Admin/Content/Images/istockphoto-1766603296-612x612.jpg" class="d-block w-100" alt="...">
-        </div>
-        <div class="carousel-item">
-            <img src="~/Areas/Admin/Content/Images/1737991843636.jfif" class="d-block w-100" alt="...">
+            <img src="~/Areas/Admin/Content/Images/1737991843636.jfif" class="d-block w-100" alt="Another medical image">
         </div>
 
+        <div class="carousel-item">
+            <img src="~/Areas/Admin/Content/Images/pexels-eye4dtail-298611.jpg" class="d-block w-100" alt="Another medical image">
+        </div>
+
+        <div class="carousel-item">
+            <img src="~/Areas/Admin/Content/Images/pexels-tima-miroshnichenko-5355709.jpg" class="d-block w-100" alt="Another medical image">
+        </div>
     </div>
 
     <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
@@ -21,4 +28,11 @@
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Next</span>
     </button>
+</div>
+
+<div class="description-section">
+    <h2>About Our Healthcare Service</h2>
+    <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur sit amet eros eu nunc facilisis luctus. Nulla facilisi. Sed at sapien at augue ultricies varius sit amet id nulla. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+    </p>
 </div>

@@ -1,9 +1,9 @@
-﻿using DAL.DAO;
-using EL;
-using UL;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DAL.DAO;
+using EL;
+using UL;
 
 namespace BLL
 {
@@ -23,11 +23,14 @@ namespace BLL
 
         public bool Exists(string patientName, string drugName, decimal? dosage, DateTime date, int? patientId = null, bool checkUniqueDrugOnly = false)
         {
+            patientName = Validations.CleanSpaces(patientName);
+            drugName = Validations.CleanSpaces(drugName);
+
             var existingRecords = dal.GetPatients()
-                .Where(p => p.Patient.Equals(patientName, StringComparison.OrdinalIgnoreCase) && p.ModifiedDate.Date == date.Date)
+                .Where(p => p.Patient.Equals(patientName, StringComparison.OrdinalIgnoreCase) && p.ModifiedDate.Date == date.Date) // Jabes, Alaxan, 250, 9/19/2025
                 .AsQueryable();
 
-            if (checkUniqueDrugOnly)
+            if (checkUniqueDrugOnly) // Jabes, Alaxan, 300, 9.19.2025 == Error. usage of same drugs within same day. // Jabes, Alaxan, 300, 9.20.2025 == Success. same patient, medicine, dosage but differnt time
             {
                 existingRecords = existingRecords.Where(p => p.DrugName.Equals(drugName, StringComparison.OrdinalIgnoreCase));
             }
@@ -37,7 +40,7 @@ namespace BLL
                     .Where(p => p.DrugName.Equals(drugName, StringComparison.OrdinalIgnoreCase) && p.Dosage == dosage);
             }
 
-            if (patientId.HasValue)
+            if (patientId.HasValue) // checks all
             {
                 existingRecords = existingRecords.Where(p => p.ID != patientId.Value);
             }

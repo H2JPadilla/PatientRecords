@@ -7,14 +7,14 @@ using System.Runtime.InteropServices;
 
 namespace DAL.DAO
 {
-    public class PatientDAL : DatabaseContext
+    public class PatientDAL : DatabaseContext // Extend DbContext for connection.
     {
-        public List<PatientEntity> GetPatients()
+        public List<PatientEntity> GetPatients() // This is the list for displaying data
         {
             var list = new List<PatientEntity>();
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("selectPatient", con);
+                var cmd = new SqlCommand("spSelectPatient", con); //SP
                 cmd.CommandType = CommandType.StoredProcedure;
                 con.Open();
                 var rdr = cmd.ExecuteReader();
@@ -23,21 +23,24 @@ namespace DAL.DAO
                     list.Add(new PatientEntity
                     {
                         ID = (int)rdr["ID"],
+
                         Patient = rdr["Patient"].ToString(),
                         DrugName = rdr["DrugName"].ToString(),
                         Dosage = Convert.ToDecimal(rdr["Dosage"]),
                         ModifiedDate = Convert.ToDateTime(rdr["ModifiedDate"])
+
                     });
                 }
             }
             return list;
         }
 
-        public PatientEntity GetPatientById(int id)
+        //Getting the ID for update
+        public PatientEntity GetPatientById(int id) // Get ID
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("selectPatient", con);
+                var cmd = new SqlCommand("spSelectPatient", con); // SP
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@ID", id);
                 con.Open();
@@ -47,9 +50,10 @@ namespace DAL.DAO
                     return new PatientEntity
                     {
                         ID = (int)rdr["ID"],
+
                         Patient = rdr["Patient"].ToString(),
                         DrugName = rdr["DrugName"].ToString(),
-                        Dosage = Convert.ToDecimal(rdr["Dosage"]), 
+                        Dosage = Convert.ToDecimal(rdr["Dosage"]),
                         ModifiedDate = Convert.ToDateTime(rdr["ModifiedDate"])
                     };
                 }
@@ -57,11 +61,12 @@ namespace DAL.DAO
             return null;
         }
 
+        //Add Patient
         public void AddPatient(PatientEntity patient)
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("createPatient", con);
+                var cmd = new SqlCommand("spCreatePatient", con); // SP
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@Patient", patient.Patient);
                 cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);
@@ -73,11 +78,12 @@ namespace DAL.DAO
             }
         }
 
-        public void UpdatePatient(PatientEntity patient)
+        //Update Patient
+        public void UpdatePatient(PatientEntity patient) 
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("updatePatient", con);
+                var cmd = new SqlCommand("spUpdatePatient", con); // SP
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@Patient", patient.Patient);
                 cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);
@@ -90,11 +96,12 @@ namespace DAL.DAO
             }
         }
 
+        //Delete Patient
         public void DeletePatient(int id)
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("deletePatient", con);
+                var cmd = new SqlCommand("spDeletePatient", con); //SP
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@ID", id);
                 con.Open();
@@ -102,39 +109,20 @@ namespace DAL.DAO
             }
         }
 
-        public bool Exists(string patient, string drug, decimal? dosage, DateTime? date = null, int? excludeId = null, bool isUniqueDrugCheck = false) // Corrected from int? dosage
+        //Check existing record
+        public bool Exists(string patient, string drug, decimal? dosage, DateTime? date = null, int? excludeId = null, bool isUniqueDrugCheck = false)
         {
             using (var con = GetConnection())
             {
-                string sql;
-                if (isUniqueDrugCheck)
-                {
-                    sql = "SELECT COUNT(1) FROM TablePrescription WHERE Patient = @Patient AND DrugName = @DrugName AND CAST(ModifiedDate AS DATE) = CAST(@Date AS DATE)";
-                }
-                else
-                {
-                    sql = "SELECT COUNT(1) FROM TablePrescription WHERE Patient = @Patient AND DrugName = @DrugName AND Dosage = @Dosage AND CAST(ModifiedDate AS DATE) = CAST(@Date AS DATE)";
-                }
+                var cmd = new SqlCommand("spCheckPatientExists", con); // SP
+                cmd.CommandType = CommandType.StoredProcedure;
 
-                if (excludeId.HasValue)
-                {
-                    sql += " AND ID <> @ID";
-                }
-
-                var cmd = new SqlCommand(sql, con);
                 cmd.Parameters.AddWithValue("@Patient", patient);
                 cmd.Parameters.AddWithValue("@DrugName", drug);
-
-                if (!isUniqueDrugCheck)
-                {
-                    cmd.Parameters.AddWithValue("@Dosage", dosage);
-                }
+                cmd.Parameters.AddWithValue("@Dosage", dosage.HasValue ? (object)dosage.Value : DBNull.Value);
                 cmd.Parameters.AddWithValue("@Date", date.Value.Date);
-
-                if (excludeId.HasValue)
-                {
-                    cmd.Parameters.AddWithValue("@ID", excludeId.Value);
-                }
+                cmd.Parameters.AddWithValue("@ExcludeId", excludeId.HasValue ? (object)excludeId.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@IsUniqueDrugCheck", isUniqueDrugCheck);
 
                 con.Open();
                 object result = cmd.ExecuteScalar();

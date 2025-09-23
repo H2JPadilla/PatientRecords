@@ -5,12 +5,14 @@ namespace UL
     public class MessageUtil
     {
         //FRONT MESSAGE
-        public const string AddSuccess = "Record has been added successfully!";
-        public const string UpdateSuccess = "Record has been updated successfully!";
-        public const string DeleteSuccess = "Record has been deleted successfully!";
-        public const string RequiredField = "This field is required.";
-        public const string NonInteger = "Dosage must be a positive number";
-        public const string LimitRange = "Dosage must be between 1 - 999.9999";
+        public const string AddSuccess = "Record successfully saved.";
+        public const string UpdateSuccess = "Record successfully updated.";
+        public const string DeleteSuccess = "Record successfully deleted.";
+
+        public const string RequiredField = "All field/s are required.";
+        public const string NonInteger = "Dosage must be a positive number.";
+        public const string LimitRange = " Dosage cannot exceed 999.9999.";
+        public const string NoChange = "No changes were made to the record."; 
 
         public const string RecordNotFound = "Record not found.";
 
@@ -18,9 +20,8 @@ namespace UL
         public const string FailedToAdd = "Failed to add data";
         public const string FailedToUpdate = "Failed to update data";
         public const string FailedToDelete = "Failed to delete data";
-        public const string ExistingRecord = "Record already exists!";
-        public const string ExistingDrug = "This patient can already take this medicine once per day";
-
+        public const string ExistingRecord = "Record already exists.";
+        public const string ExistingDrug = "Cannot add same drug to a patient.";
         //CATCH MESSAGES
         public const string NullException = "A required value is missing.";
         public const string CastException = "Invalid type conversion.";

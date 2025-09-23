@@ -11,6 +11,7 @@ namespace BLL
     {
         private readonly PatientDAL dal = new PatientDAL();
 
+        //Get all patients ID, DrugName, Dosage, ModifiedDate.
         public List<PatientEntity> GetPatients()
         {
             try
@@ -23,6 +24,7 @@ namespace BLL
             }
         }
 
+        //Get patient ID
         public PatientEntity GetPatientById(int id)
         {
             try
@@ -35,33 +37,12 @@ namespace BLL
             }
         }
 
+        //Exist validation
         public bool Exists(string patientName, string drugName, decimal? dosage, DateTime date, int? patientId = null, bool checkUniqueDrugOnly = false)
         {
-            patientName = Validations.CleanSpaces(patientName);
-            drugName = Validations.CleanSpaces(drugName);
-
-            var existingRecords = dal.GetPatients()
-                .Where(p => p.Patient.Equals(patientName, StringComparison.OrdinalIgnoreCase) && p.ModifiedDate.Date == date.Date) // Jabes, Alaxan, 250, 9/19/2025
-                .AsQueryable();
-
             try
             {
-                if (checkUniqueDrugOnly) // Jabes, Alaxan, 300, 9.19.2025 == Error. usage of same drugs within same day. // Jabes, Alaxan, 300, 9.20.2025 == Success. same patient, medicine, dosage but differnt time
-                {
-                    existingRecords = existingRecords.Where(p => p.DrugName.Equals(drugName, StringComparison.OrdinalIgnoreCase));
-                }
-                else
-                {
-                    existingRecords = existingRecords
-                        .Where(p => p.DrugName.Equals(drugName, StringComparison.OrdinalIgnoreCase) && p.Dosage == dosage);
-                }
-
-                if (patientId.HasValue) // checks all
-                {
-                    existingRecords = existingRecords.Where(p => p.ID != patientId.Value);
-                }
-
-                return existingRecords.Any();
+                return dal.Exists(patientName, drugName, dosage, date, patientId, checkUniqueDrugOnly);
             }
             catch (Exception ex)
             {
@@ -69,6 +50,7 @@ namespace BLL
             }
         }
 
+        //Add Patient
         public void AddPatient(PatientEntity patient)
         {
             string message;
@@ -111,7 +93,7 @@ namespace BLL
             catch (Exception ex)
             {
                 throw ex;
-            }    
+            }
         }
 
         public void UpdatePatient(PatientEntity patient)
@@ -138,27 +120,50 @@ namespace BLL
                     throw new ArgumentException(message, errorField);
                 }
 
+                // Check if a record with the same data already exists (excluding the current record)
+                var existingPatient = GetPatientById(patient.ID);
+                if (existingPatient == null)
+                {
+                    throw new InvalidOperationException(MessageUtil.RecordNotFound);
+                }
+
                 patient.Patient = Validations.CleanSpaces(patient.Patient);
                 patient.DrugName = Validations.CleanSpaces(patient.DrugName);
 
+                // Check if there are any changes to the data
+                bool hasChanges =
+                    !existingPatient.Patient.Equals(patient.Patient, StringComparison.OrdinalIgnoreCase) ||
+                    !existingPatient.DrugName.Equals(patient.DrugName, StringComparison.OrdinalIgnoreCase) ||
+                    existingPatient.Dosage != patient.Dosage;
+
+                if (!hasChanges)
+                {
+                    throw new InvalidOperationException(MessageUtil.NoChange);
+                }
+
+                // New check for duplicate record including the modified fields
                 if (Exists(patient.Patient, patient.DrugName, patient.Dosage, DateTime.Now.Date, patient.ID))
                 {
                     throw new InvalidOperationException(MessageUtil.ExistingRecord);
                 }
+
+                // New check for duplicate drug on the same day
                 if (Exists(patient.Patient, patient.DrugName, null, DateTime.Now.Date, patient.ID, true))
                 {
                     throw new InvalidOperationException(MessageUtil.ExistingDrug);
                 }
 
+                //Setting the date (NOW)
                 patient.ModifiedDate = DateTime.Now;
                 dal.UpdatePatient(patient);
             }
             catch (Exception ex)
             {
                 throw ex;
-            }         
+            }
         }
 
+        //Delete Patient by ID
         public void DeletePatient(int id)
         {
             try

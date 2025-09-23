@@ -16,12 +16,12 @@ namespace AL
             routes.MapRoute(
              name: "Home Page",
              url: "",
-             defaults: new { area = "Admin", controller = "Home", action = "Index" }).DataTokens.Add("area", "Admin");
+             defaults: new { area = "Admin", controller = "Patient", action = "ViewPatient" }).DataTokens.Add("area", "Admin");
 
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+                defaults: new { area = "Admin", controller = "Patient", action = "ViewPatient", id = UrlParameter.Optional }
             );
 
             routes.MapRoute(

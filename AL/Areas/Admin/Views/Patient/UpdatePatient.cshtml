@@ -3,7 +3,8 @@
     ViewBag.Title = "Update Patient";
 }
 
-<h2>Update Patient</h2>
+
+<h2 class="mt-3">Update Patient</h2>
 
 @using (Html.BeginForm("UpdatePatient", "Patient", FormMethod.Post, new { id = "patientForm" }))
 {
@@ -11,28 +12,41 @@
     @Html.HiddenFor(m => m.ID)
     <div id="validation-summary" class="text-danger"></div>
 
-    <div class="mb-3">
-        <label for="Patient" class="form-label">Patient</label>
-        @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", placeholder = "Enter patient name", title = "Enter the name of the patient", tabindex = "1" })
-        <div id="patientError" class="invalid-feedback"></div>
-    </div>
-    <div class="mb-3">
-        <label for="DrugName" class="form-label">Drug Name</label>
-        @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", placeholder = "Enter drug name", title = "Enter the name of the drug/medicine", tabindex = "2" })
-        <div id="drugNameError" class="invalid-feedback"></div>
-    </div>
 
-    <div class="mb-3">
-        <label for="Dosage" class="form-label">Dosage</label>
-        @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", tabindex = "3", title = "Enter the dosage intake" })
-        @Html.ValidationMessageFor(model => model.Dosage, "", new { @class = "text-danger" })
-        <span id="dosageError" class="text-danger d-block"></span>
-    </div>
+    <form>
+        <div class="row">
+            <div class="col">
+                <label for="Patient" class="form-label">Patient</label>
+                @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", placeholder = "Enter patient name", title = "Enter the name of the patient", tabindex = "1" })
+                <div id="patientError" class="invalid-feedback"></div>
+            </div>
+            <div class="col">
+                <label for="DrugName" class="form-label">Drug Name</label>
+                @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", placeholder = "Enter drug name", title = "Enter the name of the drug/medicine", tabindex = "2" })
+                <div id="drugNameError" class="invalid-feedback"></div>
+            </div>
+            <div class="col">
+                <label for="Dosage" class="form-label">Dosage</label>
+                @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", tabindex = "3", title = "Enter the dosage intake" })
+                @Html.ValidationMessageFor(model => model.Dosage, "", new { @class = "text-danger" })
+                <span id="dosageError" class="text-danger d-block"></span>
+            </div>
+        </div>
 
-    <button type="button" id="updateButton" class="btn btn-warning" tabindex="4">Update</button>
-    <button type="button" id="clearButton" class="btn btn-secondary" tabindex="5">Clear</button>
-    <a href="@Url.Action("ViewPatient")" class="btn btn-secondary" tabindex="6">Cancel</a>
+        @* Display validation errors from the server and client *@
+        <div id="validation-summary" class="text-danger mb-3"></div>
+
+        <div class="col-12 mt-3">
+            <button type="button" id="updateButton" class="btn btn-success" tabindex="4">Update</button>
+            <button type="button" id="clearButton" class="btn btn-secondary" tabindex="5">Clear</button>
+            <a href="@Url.Action("ViewPatient")" class="btn btn-warning" tabindex="6">Cancel</a>
+        </div>
+    </form>
 }
+
+
+
+
 
 <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
     <div class="modal-dialog">

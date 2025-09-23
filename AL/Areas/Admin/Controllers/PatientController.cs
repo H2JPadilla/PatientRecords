@@ -6,8 +6,8 @@ using BLL;
 using EL;
 using UL;
 using System.Globalization;
+using System.Data.SqlClient;
 
-    
 namespace AL.Areas.Admin.Controllers
 {
     public class PatientController : Controller
@@ -15,7 +15,7 @@ namespace AL.Areas.Admin.Controllers
         // Create instance of BLL
         private readonly PatientBLL bll = new PatientBLL();
 
-        // View with pagination
+        // Standard View: Used for the initial page load with filtering and pagination
         public ActionResult ViewPatient(
             string patient = "",
             string drug = "",
@@ -24,25 +24,36 @@ namespace AL.Areas.Admin.Controllers
             int page = 1,
             int pageSize = 10)
         {
-            // Trim leading and trailing spaces from search parameters
-            if (patient != null) patient = Validations.CleanSpaces(patient);
-            if (drug != null) drug = Validations.CleanSpaces(drug);
+            List<PatientEntity> patients = new List<PatientEntity>();
+            string errorMessage;
+            string errorField;
 
-            var patients = bll.GetPatients();
+            try
+            {
+                if (patient != null) patient = patient.Trim();
+                if (drug != null) drug = drug.Trim();
 
-            // Filtering logic 
-            if (!string.IsNullOrEmpty(patient))
-                patients = patients
-                    .Where(p => p.Patient != null && p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
-                    .ToList();
-            if (!string.IsNullOrEmpty(drug))
-                patients = patients
-                    .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
-                    .ToList();
-            if (dosage.HasValue)
-                patients = patients.Where(p => p.Dosage == dosage.Value).ToList();
-            if (date.HasValue)
-                patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
+                patients = bll.GetPatients();
+
+                // Filtering logic is applied here
+                if (!string.IsNullOrEmpty(patient))
+                    patients = patients
+                        .Where(p => p.Patient != null && p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+                if (!string.IsNullOrEmpty(drug))
+                    patients = patients
+                        .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+                if (dosage.HasValue)
+                    patients = patients.Where(p => p.Dosage == dosage.Value).ToList();
+                if (date.HasValue)
+                    patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
+            }
+            catch (Exception ex)
+            {
+                Validations.Handle(ex, out errorMessage, out errorField);
+                TempData["Message"] = errorMessage;
+            }
 
             int totalRecords = patients.Count();
             var pagedPatients = patients
@@ -62,7 +73,7 @@ namespace AL.Areas.Admin.Controllers
             return View(pagedPatients);
         }
 
-        //Returns JSON for live search
+        // AJAX Action: Returns JSON for live search
         [HttpGet]
         public JsonResult SearchPatients(
             string patient = "",
@@ -72,51 +83,59 @@ namespace AL.Areas.Admin.Controllers
             int page = 1,
             int pageSize = 10)
         {
-            // Trim leading and trailing spaces from search parameters
-            if (patient != null) patient = Validations.CleanSpaces(patient);
-            if (drug != null) drug = Validations.CleanSpaces(drug);
+            string errorMessage = null;
 
-            var patients = bll.GetPatients();
-
-            if (!string.IsNullOrEmpty(patient))
-                patients = patients
-                    .Where(p => p.Patient != null && p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
-                    .ToList();
-            if (!string.IsNullOrEmpty(drug))
-                patients = patients
-                    .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
-                    .ToList();
-            if (dosage.HasValue)
-                patients = patients.Where(p => p.Dosage == dosage.Value).ToList();
-            if (date.HasValue)
-                patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
-
-            int totalRecords = patients.Count();
-            var pagedPatients = patients
-                .OrderByDescending(p => p.ModifiedDate)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-
-            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-
-            //format the ModifiedDate to a string
-            var formattedPatients = pagedPatients.Select(p => new
+            try
             {
-                p.ID,
-                p.Patient,
-                p.DrugName,
-                p.Dosage,
-                ModifiedDate = p.ModifiedDate.ToString("MM-dd-yyyy") // Format as a standard date string
-            }).ToList();
+                if (patient != null) patient = patient.Trim();
+                if (drug != null) drug = drug.Trim();
 
-            return Json(new
+                var patients = bll.GetPatients();
+                if (!string.IsNullOrEmpty(patient))
+                    patients = patients
+                        .Where(p => p.Patient != null && p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+                if (!string.IsNullOrEmpty(drug))
+                    patients = patients
+                        .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+                if (dosage.HasValue)
+                    patients = patients.Where(p => p.Dosage == dosage.Value).ToList();
+                if (date.HasValue)
+                    patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
+
+                int totalRecords = patients.Count();
+                var pagedPatients = patients
+                    .OrderByDescending(p => p.ModifiedDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+                int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+
+                var formattedPatients = pagedPatients.Select(p => new
+                {
+                    p.ID,
+                    p.Patient,
+                    p.DrugName,
+                    p.Dosage,
+                    ModifiedDate = p.ModifiedDate.ToString("MM-dd-yyyy")
+                }).ToList();
+
+                return Json(new
+                {
+                    success = true,
+                    patients = formattedPatients,
+                    totalPages = totalPages,
+                    page = page,
+                    pageSize = pageSize
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
             {
-                patients = formattedPatients,
-                totalPages = totalPages,
-                page = page,
-                pageSize = pageSize
-            }, JsonRequestBehavior.AllowGet);
+                string errorField;
+                Validations.Handle(ex, out errorMessage, out errorField);
+                return Json(new { success = false, message = errorMessage }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         // GET: Add Patient
@@ -131,27 +150,51 @@ namespace AL.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult AddPatient(PatientEntity model)
         {
+            string errorMessage;
+            string errorField;
+
             if (!ModelState.IsValid)
             {
                 return View("AddPatient", model);
             }
 
-            bll.AddPatient(model);
-            TempData["Message"] = MessageUtil.AddSuccess;
-            return RedirectToAction("ViewPatient");
+            try
+            {
+                bll.AddPatient(model);
+                TempData["Message"] = MessageUtil.AddSuccess;
+                return RedirectToAction("ViewPatient");
+            }
+            catch (Exception ex)
+            {
+                Validations.Handle(ex, out errorMessage, out errorField);
+                ModelState.AddModelError(errorField, errorMessage);
+                return View("AddPatient", model);
+            }
         }
 
         // GET: Update Patient
         [HttpGet]
         public ActionResult UpdatePatient(int id)
         {
-            var patient = bll.GetPatientById(id);
-            if (patient == null)
+            string errorMessage;
+            string errorField;
+
+            try
             {
-                TempData["Message"] = MessageUtil.RecordNotFound;
+                var patient = bll.GetPatientById(id);
+                if (patient == null)
+                {
+                    TempData["Message"] = MessageUtil.RecordNotFound;
+                    return RedirectToAction("ViewPatient");
+                }
+                return View(patient);
+            }
+            catch (Exception ex)
+            {
+                Validations.Handle(ex, out errorMessage, out errorField);
+                TempData["Message"] = errorMessage;
                 return RedirectToAction("ViewPatient");
             }
-            return View(patient);
         }
 
         // POST: Update Patient
@@ -159,14 +202,26 @@ namespace AL.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult UpdatePatient(PatientEntity model)
         {
+            string errorMessage;
+            string errorField;
+
             if (!ModelState.IsValid)
             {
                 return View("UpdatePatient", model);
             }
 
-            bll.UpdatePatient(model);
-            TempData["Message"] = MessageUtil.UpdateSuccess;
-            return RedirectToAction("ViewPatient");
+            try
+            {
+                bll.UpdatePatient(model);
+                TempData["Message"] = MessageUtil.UpdateSuccess;
+                return RedirectToAction("ViewPatient");
+            }
+            catch (Exception ex)
+            {
+                Validations.Handle(ex, out errorMessage, out errorField);
+                ModelState.AddModelError(errorField, errorMessage);
+                return View("UpdatePatient", model);
+            }
         }
 
         // POST: Delete Patient
@@ -174,12 +229,24 @@ namespace AL.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeletePatient(int id)
         {
-            bll.DeletePatient(id);
-            TempData["Message"] = MessageUtil.DeleteSuccess;
-            return RedirectToAction("ViewPatient");
+            string errorMessage;
+            string errorField;
+
+            try
+            {
+                bll.DeletePatient(id);
+                TempData["Message"] = MessageUtil.DeleteSuccess;
+                return RedirectToAction("ViewPatient");
+            }
+            catch (Exception ex)
+            {
+                Validations.Handle(ex, out errorMessage, out errorField);
+                TempData["Message"] = errorMessage;
+                return RedirectToAction("ViewPatient");
+            }
         }
 
-        // Validate that will be called via AJAX before form submission
+        // Controller: PatientController.cs
         [HttpPost]
         public JsonResult ValidatePatient(string patient, string drugName, string dosage, int? id)
         {
@@ -194,13 +261,13 @@ namespace AL.Areas.Admin.Controllers
                 return Json(new { success = false, message = "Dosage must be a positive number.", errorType = "invalidDosage" });
             }
 
-            // 1. Check for a full row existence (exact duplicate) == Jabes, Alaxan, 250, 9/19/2025 == Jabes, Alaxan, 250, 9/19/2025 (Return error: Existing record)
+            // 1. Check for a full row existence (exact duplicate)
             if (bll.Exists(patient, drugName, parsedDosage, DateTime.Now.Date, id))
             {
                 return Json(new { success = false, message = MessageUtil.ExistingRecord, errorType = "alreadyExist" });
             }
 
-            // 2. Check if the specific drug has already been prescribed to the patient today == Jabes, Alaxan, 300, 9.19.2025 ==  Jabes, Alaxan, 200, 9.19.2025 == Patient = Patient, Drugname = Drugname, Dosage != Dosage, Date = DateNow (Return error: Existing drug for today) 
+            // 2. Check if the specific drug has already been prescribed to the patient today
             if (bll.Exists(patient, drugName, null, DateTime.Now.Date, id, true))
             {
                 return Json(new { success = false, message = MessageUtil.ExistingDrug, errorType = "uniqueDrug" });

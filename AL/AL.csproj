@@ -109,10 +109,12 @@
     <Content Include="Areas\Admin\Content\JavaScript\filter.js" />
     <Content Include="Areas\Admin\Content\JavaScript\jquery-3.6.0.min.js" />
     <Content Include="Areas\Admin\Content\JavaScript\jquery.min.js" />
+    <Content Include="Areas\Admin\Content\JavaScript\lottie.min.js" />
     <Content Include="Areas\Admin\Content\JavaScript\patient.js" />
     <Content Include="Content\PagedList.css" />
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />
+    <Content Include="Areas\Admin\Views\Error\ErrorView.cshtml" />
     <None Include="Scripts\jquery-1.4.4-vsdoc.js" />
     <Content Include="Scripts\jquery-1.4.4.js" />
     <Content Include="Scripts\jquery-1.4.4.min.js" />
@@ -129,6 +131,7 @@
   <ItemGroup>
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Areas\Admin\AdminAreaRegistration.cs" />
+    <Compile Include="Areas\Admin\Controllers\ErrorController.cs" />
     <Compile Include="Areas\Admin\Controllers\PatientController.cs" />
     <Compile Include="Areas\Admin\Controllers\HomeController.cs" />
     <Compile Include="Global.asax.cs">

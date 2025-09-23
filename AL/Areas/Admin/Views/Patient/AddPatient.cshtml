@@ -3,36 +3,39 @@
     ViewBag.Title = "Add Patient";
 }
 
-<h2>Add Patient</h2>
+<h2 class="mt-3">Add Patient</h2>
 @using (Html.BeginForm("AddPatient", "Patient", FormMethod.Post, new { id = "mainForm" }))
 {
     @Html.AntiForgeryToken()
 
-    <div class="row g-3">
-        @* Display validation errors from the server and client *@
-        <div id="validation-summary" class="text-danger mb-3"></div>
-
-        <div class="col-12">
+<form>
+    <div class="row">
+        <div class="col">
             <label for="Patient" class="form-label">Patient</label>
             @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", id = "Patient", title = "Enter the name of the patient", placeholder = "Enter patient name" })
             <span id="patientError" class="text-danger d-block"></span>
         </div>
-        <div class="col-12">
+        <div class="col">
             <label for="DrugName" class="form-label">Drug Name</label>
             @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", id = "DrugName", title = "Enter the name of the drug/medicine", placeholder = "Enter drug name" })
             <span id="drugNameError" class="text-danger d-block"></span>
         </div>
-        <div class="col-12">
+        <div class="col">
             <label for="Dosage" class="form-label">Dosage</label>
             @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", title = "Enter the dosage intake" })
             <span id="dosageError" class="text-danger d-block"></span>
         </div>
-        <div class="col-12 mt-3">
-            <button type="button" id="saveButton" class="btn btn-success">Save</button>
-            <button type="button" class="btn btn-secondary" id="clearButton">Clear</button>
-            <a href="@Url.Action("ViewPatient")" class="btn btn-light">Cancel</a>
-        </div>
     </div>
+
+    @* Display validation errors from the server and client *@
+    <div id="validation-summary" class="text-danger mb-3"></div>
+
+    <div class="col-12 mt-3">
+        <button type="button" id="saveButton" class="btn btn-success">Save</button>
+        <button type="button" class="btn btn-secondary" id="clearButton">Clear</button>
+        <a href="@Url.Action("ViewPatient")" class="btn btn-warning">Cancel</a>
+    </div>
+</form>
 }
 
 @*Confirmation Modal*@

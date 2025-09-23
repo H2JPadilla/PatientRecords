@@ -15,14 +15,13 @@ namespace AL.Areas.Admin.Controllers
         // Create instance of BLL
         private readonly PatientBLL bll = new PatientBLL();
 
-        // Standard View: Used for the initial page load with filtering and pagination
         public ActionResult ViewPatient(
             string patient = "",
             string drug = "",
-            decimal? dosage = null,
+            string dosage = "", // Changed from decimal? to string
             DateTime? date = null,
             int page = 1,
-            int pageSize = 10)
+            int pageSize = 7)
         {
             List<PatientEntity> patients = new List<PatientEntity>();
             string errorMessage;
@@ -32,6 +31,7 @@ namespace AL.Areas.Admin.Controllers
             {
                 if (patient != null) patient = patient.Trim();
                 if (drug != null) drug = drug.Trim();
+                if (dosage != null) dosage = dosage.Trim();
 
                 patients = bll.GetPatients();
 
@@ -44,8 +44,8 @@ namespace AL.Areas.Admin.Controllers
                     patients = patients
                         .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
                         .ToList();
-                if (dosage.HasValue)
-                    patients = patients.Where(p => p.Dosage == dosage.Value).ToList();
+                if (!string.IsNullOrEmpty(dosage))
+                    patients = patients.Where(p => p.Dosage.ToString().Contains(dosage)).ToList(); // Updated filter logic
                 if (date.HasValue)
                     patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
             }
@@ -64,7 +64,7 @@ namespace AL.Areas.Admin.Controllers
 
             ViewBag.Patient = patient;
             ViewBag.Drug = drug;
-            ViewBag.Dosage = dosage;
+            ViewBag.Dosage = dosage; // The ViewBag property will now hold a string
             ViewBag.Date = date?.ToString("MM-dd-yyyy");
             ViewBag.Page = page;
             ViewBag.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
@@ -78,10 +78,10 @@ namespace AL.Areas.Admin.Controllers
         public JsonResult SearchPatients(
             string patient = "",
             string drug = "",
-            decimal? dosage = null,
+            string dosage = "", // Changed from decimal? to string
             DateTime? date = null,
             int page = 1,
-            int pageSize = 10)
+            int pageSize = 7)
         {
             string errorMessage = null;
 
@@ -89,6 +89,7 @@ namespace AL.Areas.Admin.Controllers
             {
                 if (patient != null) patient = patient.Trim();
                 if (drug != null) drug = drug.Trim();
+                if (dosage != null) dosage = dosage.Trim();
 
                 var patients = bll.GetPatients();
                 if (!string.IsNullOrEmpty(patient))
@@ -99,8 +100,8 @@ namespace AL.Areas.Admin.Controllers
                     patients = patients
                         .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
                         .ToList();
-                if (dosage.HasValue)
-                    patients = patients.Where(p => p.Dosage == dosage.Value).ToList();
+                if (!string.IsNullOrEmpty(dosage))
+                    patients = patients.Where(p => p.Dosage.ToString().Contains(dosage)).ToList(); // Updated filter logic
                 if (date.HasValue)
                     patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
 

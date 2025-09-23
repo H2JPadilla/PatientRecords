@@ -1,11 +1,35 @@
 ﻿@model List<EL.PatientEntity>
 @{
     ViewBag.Title = "Patient List";
-    // Define a counter variable for the initial load
     int counter = (ViewBag.Page - 1) * ViewBag.PageSize + 1;
 }
+@Html.AntiForgeryToken()
 
-<h2>Patient List</h2>
+<style>
+    h2 {
+        font-size: 30px;
+    }
+
+    .btn-outline-secondary {
+        color: dodgerblue;
+        border: 0;
+    }
+
+    .filter-group .col-md-1,
+    .filter-group .col-md-2,
+    .filter-group .col-md-3,
+    .filter-group .col-md-4 {
+        display: flex;
+        align-items: center;
+    }
+
+    .filter-group .btn {
+        height: calc(2.25rem + 2px);
+    }
+</style>
+
+<h2>PatientDetails</h2>
+
 @if (TempData["Message"] != null)
 {
     <div class="alert alert-success">
@@ -13,79 +37,64 @@
     </div>
 }
 
-<form id="searchForm" class="mb-4">
-    @* The __RequestVerificationToken is needed for the delete action *@
-    @Html.AntiForgeryToken()
-    <div class="row g-4">
-        <div class="col-md-4">
-            <label for="patientFilter" class="form-label">Patient</label>
-            <input type="text" id="patientFilter" name="patient" class="form-control" value="@ViewBag.Patient" placeholder="Patient Name"> @*@ViewBag.Patient == This is how the search form "remembers" what the user typed after the page reloads.*@
-        </div>
-        <div class="col-md-2">
-            <label for="drugFilter" class="form-label">Drug Name</label>
-            <input type="text" id="drugFilter" name="drug" class="form-control" value="@ViewBag.Drug" placeholder="Drug Name">
-        </div>
-        <div class="col-md-2">
-            <label for="dosageFilter" class="form-label">Dosage</label>
-            <input type="number" id="dosageFilter" name="dosage" class="form-control" value="@ViewBag.Dosage" placeholder="Dosage" >
-        </div>
+<div class="mb-1">
+    <a href="@Url.Action("AddPatient", "Patient")" class="btn btn-outline-secondary">
+        Create New Records
+    </a>
+</div>
 
-        <div class="col-md-2">
-            <label for="dateFilter" class="form-label">Modified Date</label>
-            <input type="date" id="dateFilter" name="date" class="form-control" value="@ViewBag.Date">
-        </div>
-
-        <div class="col-md-2 d-flex align-items-end justify-content-end">
-            <button type="button" id="resetButton" class="btn btn-secondary me-2">Reset</button>
-            <a href="@Url.Action("AddPatient", "Patient")" class="btn btn-success">
-                + Add Patient
-            </a>
-        </div>
-
+<div class="row mb-1 filter-group align-items-center border-top border-bottom py-2">
+    <div class="col-md-2">
+        <label for="dateFilter" style="color: dodgerblue; margin-left:10px;">Search by</label>
     </div>
-</form>
+    <div class="col-md-2">
+        <input type="date" id="dateFilter" name="date" class="form-control" value="@ViewBag.Date">
+    </div>
+    <div class="col-md-2">
+        <input type="number" id="dosageFilter" name="dosage" class="form-control" value="@ViewBag.Dosage">
+    </div>
+    <div class="col-md-2">
+        <input type="text" id="drugFilter" name="drug" class="form-control" value="@ViewBag.Drug">
+    </div>
+    <div class="col-md-3">
+        <input type="text" id="patientFilter" name="patient" class="form-control" value="@ViewBag.Patient">
+    </div>
+    <div class="col-md-1">
+        <button type="button" class="btn btn-secondary w-100" id="resetFilters">Reset</button>
+    </div>
+</div>
 
 <table class="table table-hover">
     <thead>
         <tr>
-            <th>No.</th>
-            <th class="col-4">Patient</th>
-            <th class="col-3">Drug Name</th>
-            <th>Dosage</th>
-            <th>Modified Date</th>
-            <th>Actions</th>
+            <th class="col-md-2">Actions</th>
+            <th class="col-md-2">Date</th>
+            <th class="col-md-2">Dosage</th>
+            <th class="col-md-2">Drug Name</th>
+            <th class="col-md-3">Patient</th>
+            <th class="col-md-1"></th>
         </tr>
     </thead>
     <tbody id="patientTableBody">
-        @* This loop renders the initial patient list when the page first loads *@
         @foreach (var patient in Model)
         {
             <tr>
-                <td data-id="@patient.ID">@(counter++)</td>
-                <td>@patient.Patient</td>
-                <td>@patient.DrugName</td>
-                <td>@patient.Dosage.ToString("F2")</td>
-                <td>@patient.ModifiedDate.ToShortDateString()</td>
-                <td>
-                    <a href="@Url.Action("UpdatePatient", new { id = patient.ID })" class="btn btn-sm btn-primary">Edit</a>
-                    <a href="#" class="btn btn-sm btn-danger delete-btn" data-id="@patient.ID" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
+                <td class="col-md-2">
+                    <a href="@Url.Action("UpdatePatient", new { id = patient.ID })" class="btn btn-sm btn-outline-secondary">Edit</a> |
+                    <a href="#" class="btn btn-sm btn-outline-secondary delete-btn" data-id="@patient.ID" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
                 </td>
+                <td class="col-md-2">@patient.ModifiedDate.ToShortDateString()</td>
+                <td class="col-md-2">@patient.Dosage.ToString("F2")</td>
+                <td class="col-md-2">@patient.DrugName</td>
+                <td class="col-md-3">@patient.Patient</td>
+                <td class="col-md-1" hidden>@patient.ID</td>
             </tr>
         }
     </tbody>
 </table>
 
 <div id="paginationContainer">
-    <nav aria-label="Page navigation">
-        <ul class="pagination">
-            @for (int i = 1; i <= ViewBag.TotalPages; i++)
-            {
-                <li class="page-item @(i == ViewBag.Page ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("ViewPatient", new { patient = ViewBag.Patient, drug = ViewBag.Drug, dosage = ViewBag.Dosage, date = ViewBag.Date, page = i, pageSize = ViewBag.PageSize })">@i</a>
-                </li>
-            }
-        </ul>
-    </nav>
+    @* The pagination will be dynamically generated by JavaScript *@
 </div>
 
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -108,14 +117,12 @@
 
 @section Scripts {
     <script>
-        //USED AJAX FOR FUNCTIONS LIKE SEARCH, DELETE, PAGINATION
         document.addEventListener('DOMContentLoaded', function () {
             let timeout = null;
-            const searchInputs = document.querySelectorAll('#searchForm input');
-            const form = document.getElementById('searchForm');
+            let currentPage = @ViewBag.Page; // Store the current page
             const tableBody = document.getElementById('patientTableBody');
             const paginationContainer = document.getElementById('paginationContainer');
-            const resetButton = document.getElementById('resetButton');
+            const searchInputs = document.querySelectorAll('#dateFilter, #drugFilter, #dosageFilter, #patientFilter');
 
             // Store the ID of the record to be deleted
             let patientIdToDelete = null;
@@ -125,7 +132,7 @@
             const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
             // 1. Event listener for the delete button using event delegation
-            tableBody.addEventListener('click', function(e) {
+            tableBody.addEventListener('click', function (e) {
                 if (e.target.classList.contains('delete-btn')) {
                     e.preventDefault();
 
@@ -138,7 +145,7 @@
             });
 
             // 2. Event listener for the modal's confirm button
-            confirmDeleteBtn.addEventListener('click', function() {
+            confirmDeleteBtn.addEventListener('click', function () {
                 if (patientIdToDelete) {
                     // Create a temporary form to submit the POST request
                     const tempForm = document.createElement('form');
@@ -165,38 +172,8 @@
                 }
             });
 
-            // Listen for keyup on all text/number inputs for live search
-            searchInputs.forEach(input => {
-                input.addEventListener('keyup', function () {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(function () {
-                        searchPatients();
-                    }, 500);
-                });
-            });
 
-            // Listen for 'change' on the date input
-            document.getElementById('dateFilter').addEventListener('change', function () {
-                searchPatients();
-            });
-
-            // Prevent form submission on Enter key
-            form.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    searchPatients();
-                }
-            });
-
-            // Reset button functionality
-            resetButton.addEventListener('click', function () {
-                searchInputs.forEach(input => {
-                    input.value = '';
-                });
-                searchPatients();
-            });
-
-            // The main AJAX function for searching
+            // Re-useable search function with page number
             function searchPatients(page = 1) {
                 const patient = document.getElementById('patientFilter').value.trim();
                 const drug = document.getElementById('drugFilter').value.trim();
@@ -213,94 +190,138 @@
 
                 fetch(`@Url.Action("SearchPatients")?${queryString}`, {
                     method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
+                    headers: { 'Accept': 'application/json' }
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    updateTable(data.patients, data.page, data.pageSize);
-                    updatePagination(data.totalPages, data.page);
-
-                    // Keep the date input field value after the search
-                    document.getElementById('dateFilter').value = date;
-                })
-                .catch(error => {
-                    console.error('There was a problem with the fetch operation:', error);
-                });
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        updateTable(data.patients);
+                        updatePagination(data.totalPages, data.page);
+                        currentPage = data.page; // Update the currentPage variable
+                    })
+                    .catch(error => console.error('Fetch error:', error));
             }
 
-            // Update the table with new data from the AJAX response
-            function updateTable(patients, page, pageSize) {
+
+            // Update table rows
+            function updateTable(patients) {
                 tableBody.innerHTML = '';
                 if (patients.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No records found</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No records found</td></tr>';
                     return;
                 }
 
-                let counter = (page - 1) * pageSize + 1;
-
                 patients.forEach(patient => {
                     const row = document.createElement('tr');
-
                     row.innerHTML = `
-                        <td data-id="${patient.ID}">${counter++}</td>
-                        <td>${patient.Patient}</td>
-                        <td>${patient.DrugName}</td>
-                        <td>${patient.Dosage.toFixed(2)}</td>
-                        <td>${patient.ModifiedDate}</td>
-                        <td>
-                            <a href="/Admin/Patient/UpdatePatient/${patient.ID}" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="#" class="btn btn-sm btn-danger delete-btn" data-id="${patient.ID}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
+                        <td class="col-md-2">
+                            <a href="/Admin/Patient/UpdatePatient/${patient.ID}" class="btn btn-sm btn-outline-secondary">Edit</a> |
+                            <a href="#" class="btn btn-sm btn-outline-secondary delete-btn" data-id="${patient.ID}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
                         </td>
+                        <td class="col-md-2">${new Date(patient.ModifiedDate).toLocaleDateString()}</td>
+                        <td class="col-md-2">${parseFloat(patient.Dosage).toFixed(2)}</td>
+                        <td class="col-md-2">${patient.DrugName}</td>
+                        <td class="col-md-3">${patient.Patient}</td>
+                        <td class="col-md-1"></td>
                     `;
                     tableBody.appendChild(row);
                 });
             }
 
-            // Update the pagination links with new data based on search
+            // Update pagination links dynamically with Bootstrap styling and event listeners
             function updatePagination(totalPages, currentPage) {
-                const ul = document.createElement('ul');
-                ul.className = 'pagination';
+                const nav = document.createElement('nav');
+                nav.setAttribute('aria-label', 'Page navigation');
+                const paginationUl = document.createElement('ul');
+                paginationUl.className = 'pagination';
 
+                // Previous button
+                const prevLi = document.createElement('li');
+                prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                const prevLink = document.createElement('a');
+                prevLink.className = 'page-link';
+                prevLink.href = '#';
+                prevLink.textContent = 'Previous';
+                prevLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        searchPatients(currentPage - 1);
+                    }
+                });
+                prevLi.appendChild(prevLink);
+                paginationUl.appendChild(prevLi);
+
+                // Page number links
                 for (let i = 1; i <= totalPages; i++) {
                     const li = document.createElement('li');
                     li.className = `page-item ${i === currentPage ? 'active' : ''}`;
                     const link = document.createElement('a');
                     link.className = 'page-link';
-                    link.textContent = i;
                     link.href = '#';
+                    link.textContent = i;
                     link.addEventListener('click', (e) => {
                         e.preventDefault();
                         searchPatients(i);
                     });
                     li.appendChild(link);
-                    ul.appendChild(li);
+                    paginationUl.appendChild(li);
                 }
 
-                paginationContainer.innerHTML = '';
-                paginationContainer.appendChild(ul);
-            }
-        });
-    </script>
+                // Next button
+                const nextLi = document.createElement('li');
+                nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                const nextLink = document.createElement('a');
+                nextLink.className = 'page-link';
+                nextLink.href = '#';
+                nextLink.textContent = 'Next';
+                nextLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        searchPatients(currentPage + 1);
+                    }
+                });
+                nextLi.appendChild(nextLink);
+                paginationUl.appendChild(nextLi);
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // alert disappear
+                // Clear and append
+                paginationContainer.innerHTML = '';
+                nav.appendChild(paginationUl);
+                paginationContainer.appendChild(nav);
+            }
+
+            // Initialize event listeners for search inputs
+            searchInputs.forEach(input => {
+                input.addEventListener('input', function () {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(function () {
+                        searchPatients(); // Start search from page 1
+                    }, 500);
+                });
+            });
+
+            // Reset button functionality
+            document.getElementById('resetFilters').addEventListener('click', function () {
+                document.getElementById('dateFilter').value = '';
+                document.getElementById('dosageFilter').value = '';
+                document.getElementById('drugFilter').value = '';
+                document.getElementById('patientFilter').value = '';
+                searchPatients(); // Reload the list
+            });
+
+            // Auto-dismiss alert
             const successAlert = document.querySelector('.alert.alert-success');
             if (successAlert) {
                 setTimeout(() => {
                     successAlert.style.transition = 'opacity 0.5s ease-out';
                     successAlert.style.opacity = '0';
-
                     setTimeout(() => successAlert.remove(), 500);
-                }, 3000); // 3000 milliseconds = 3 seconds
+                }, 3000);
             }
+
+            // Initial call to generate pagination on page load
+            searchPatients(currentPage);
         });
     </script>
 }

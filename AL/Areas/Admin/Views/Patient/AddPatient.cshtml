@@ -3,42 +3,42 @@
     ViewBag.Title = "Add Patient";
 }
 
-<h2 class="mt-3">Add Patient</h2>
+<h2 class="mt-3">New Record</h2>
 @using (Html.BeginForm("AddPatient", "Patient", FormMethod.Post, new { id = "mainForm" }))
 {
     @Html.AntiForgeryToken()
 
-<form>
-    <div class="row">
-        <div class="col">
-            <label for="Patient" class="form-label">Patient</label>
-            @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", id = "Patient", title = "Enter the name of the patient", placeholder = "Enter patient name" })
-            <span id="patientError" class="text-danger d-block"></span>
-        </div>
-        <div class="col">
-            <label for="DrugName" class="form-label">Drug Name</label>
-            @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", id = "DrugName", title = "Enter the name of the drug/medicine", placeholder = "Enter drug name" })
-            <span id="drugNameError" class="text-danger d-block"></span>
-        </div>
-        <div class="col">
-            <label for="Dosage" class="form-label">Dosage</label>
-            @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", title = "Enter the dosage intake" })
+    <div>
+
+        <div class="mb-3 col-4">
+            <label for="Dosage" class="form-label">Dosage<span style="color:red;">*</span></label>
+            @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", title = "Enter the dosage intake", tabindex = "1" })
             <span id="dosageError" class="text-danger d-block"></span>
         </div>
+
+        <div class="mb-3 col-4">
+            <label for="DrugName" class="form-label">Drug<span style="color:red;">*</span></label>
+            @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", id = "DrugName", title = "Enter the name of the drug/medicine", tabindex = "2" })
+            <span id="drugNameError" class="text-danger d-block"></span>
+        </div>
+
+        <div class="mb-3 col-4">
+            <label for="Patient" class="form-label">Patient<span style="color:red;">*</span>    </label>
+            @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", id = "Patient", title = "Enter the name of the patient", tabindex = "3" })
+            <span id="patientError" class="text-danger d-block"></span>
+        </div>
+
     </div>
 
-    @* Display validation errors from the server and client *@
     <div id="validation-summary" class="text-danger mb-3"></div>
 
     <div class="col-12 mt-3">
-        <button type="button" id="saveButton" class="btn btn-success">Save</button>
-        <button type="button" class="btn btn-secondary" id="clearButton">Clear</button>
-        <a href="@Url.Action("ViewPatient")" class="btn btn-warning">Cancel</a>
+        <button type="button" id="saveButton" class="btn btn-outline-secondary" tabindex="4">Save</button>
+        <button type="button" class="btn btn-outline-secondary" id="clearButton"tabindex="5">Clear</button>
+        <a href="@Url.Action("ViewPatient")" class="btn btn-outline-secondary"tabindex="6">Cancel</a>
     </div>
-</form>
 }
 
-@*Confirmation Modal*@
 <div class="modal fade" id="saveModal" tabindex="-1" aria-labelledby="saveModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -59,168 +59,154 @@
 @section Scripts {
     <script src="~/Areas/Admin/Content/JavaScript/jquery-3.6.0.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('Patient').focus();
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('Dosage').focus();
 
-            var saveModal = new bootstrap.Modal(document.getElementById('saveModal'));
+        var saveModal = new bootstrap.Modal(document.getElementById('saveModal'));
 
-            //removes the error indication when the user starts typing.
-            document.querySelectorAll('input').forEach(input => {
-                input.addEventListener('input', function() {
-                    this.classList.remove('is-invalid');
-                    document.getElementById(this.id + 'Error').textContent = '';
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                document.getElementById(this.id + 'Error').textContent = '';
+            });
+        });
+
+        document.getElementById('Dosage').addEventListener('input', function() {
+            let value = this.value;
+            if (value.startsWith('0') && value.length > 1 && value.charAt(1) !== '.') {
+                this.value = parseFloat(value);
+            }
+        });
+
+        function clearErrors() {
+            document.getElementById('dosageError').textContent = '';
+            document.getElementById('drugNameError').textContent = '';
+            document.getElementById('patientError').textContent = '';
+            document.getElementById('validation-summary').textContent = '';
+            document.getElementById('Dosage').classList.remove('is-invalid');
+            document.getElementById('DrugName').classList.remove('is-invalid');
+            document.getElementById('Patient').classList.remove('is-invalid');
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const patient = document.getElementById('Patient');
+            const drugName = document.getElementById('DrugName');
+            const dosage = document.getElementById('Dosage');
+
+            clearErrors();
+
+            if (patient.value.trim() === "") {
+                document.getElementById('patientError').textContent = "Patient name is required.";
+                patient.classList.add('is-invalid');
+                isValid = false;
+            } else if (!/^[a-zA-Z\s'-]+$/.test(patient.value) || patient.value.length > 50) {
+                document.getElementById('patientError').textContent = "Patient name must be alphanumeric with hyphens, apostrophes, spaces and max 50 characters.";
+                patient.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (drugName.value.trim() === "") {
+                document.getElementById('drugNameError').textContent = "Drug name is required.";
+                drugName.classList.add('is-invalid');
+                isValid = false;
+            } else if (!/^[a-zA-Z0-9\s]+$/.test(drugName.value) || drugName.value.length > 50) {
+                document.getElementById('drugNameError').textContent = "Drug name must be alphanumeric with spaces and max 50 characters.";
+                drugName.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            const dosageValue = dosage.value.trim();
+            const parsedDosage = parseFloat(dosageValue);
+
+            if (dosageValue === "") {
+                document.getElementById('dosageError').textContent = "Dosage is required.";
+                dosage.classList.add('is-invalid');
+                isValid = false;
+            } else if (isNaN(parsedDosage) || parsedDosage <= 0) {
+                document.getElementById('dosageError').textContent = "Dosage must be a positive number.";
+                dosage.classList.add('is-invalid');
+                isValid = false;
+            } else if (parsedDosage > 999.9999) {
+                document.getElementById('dosageError').textContent = "Dosage cannot exceed 999.9999.";
+                dosage.classList.add('is-invalid');
+                isValid = false;
+            }
+            else {
+                const decimalPlaces = (dosageValue.split('.')[1] || '').length;
+                if (decimalPlaces > 4) {
+                    document.getElementById('dosageError').textContent = "Dosage can only have up to 4 decimal places.";
+                    dosage.classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                const firstInvalid = document.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                }
+            }
+            return isValid;
+        }
+
+        document.getElementById('saveButton').addEventListener('click', async function (e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            const patient = document.getElementById('Patient').value;
+            const drugName = document.getElementById('DrugName').value;
+            const dosage = document.getElementById('Dosage').value;
+
+            try {
+                const response = await fetch('@Url.Action("ValidatePatient", "Patient")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.getElementsByName('__RequestVerificationToken')[0].value
+                    },
+                    body: JSON.stringify({ patient, drugName, dosage })
                 });
-            });
 
-            // remove leading zeros from the Dosage field
-            document.getElementById('Dosage').addEventListener('input', function() {
-                let value = this.value;
-                // Check if the value starts with '0' but is not just '0' itself or a decimal like '0.'
-                if (value.startsWith('0') && value.length > 1 && value.charAt(1) !== '.') {
-                    this.value = parseFloat(value);
-                }
-            });
+                const data = await response.json();
 
-            // clear all validation errors and invalid classes
-            function clearErrors() {
-                document.getElementById('patientError').textContent = '';
-                document.getElementById('drugNameError').textContent = '';
-                document.getElementById('dosageError').textContent = '';
-                document.getElementById('validation-summary').textContent = '';
-                document.getElementById('Patient').classList.remove('is-invalid');
-                document.getElementById('DrugName').classList.remove('is-invalid');
-                document.getElementById('Dosage').classList.remove('is-invalid');
-            }
+                if (!data.success) {
+                    const validationSummary = document.getElementById('validation-summary');
+                    validationSummary.textContent = data.message;
 
-            function validateForm() {
-                let isValid = true;
-                const patient = document.getElementById('Patient');
-                const drugName = document.getElementById('DrugName');
-                const dosage = document.getElementById('Dosage');
-
-                clearErrors();
-
-                // Patient validation
-                if (patient.value.trim() === "") {
-                    document.getElementById('patientError').textContent = "Patient name is required.";
-                    patient.classList.add('is-invalid');
-                    isValid = false;
-                } else if (!/^[a-zA-Z\s'-]+$/.test(patient.value) || patient.value.length > 50) {
-                    document.getElementById('patientError').textContent = "Patient name must be alphanumeric with hyphens, apostrophes, spaces and max 50 characters.";
-                    patient.classList.add('is-invalid');
-                    isValid = false;
-                }
-
-                // Drug Name validation
-                if (drugName.value.trim() === "") {
-                    document.getElementById('drugNameError').textContent = "Drug name is required.";
-                    drugName.classList.add('is-invalid');
-                    isValid = false;
-                } else if (!/^[a-zA-Z0-9\s]+$/.test(drugName.value) || drugName.value.length > 50) {
-                    document.getElementById('drugNameError').textContent = "Drug name must be alphanumeric with spaces and max 50 characters.";
-                    drugName.classList.add('is-invalid');
-                    isValid = false;
-                }
-
-                // Corrected Dosage validation logic
-                const dosageValue = dosage.value.trim();
-                const parsedDosage = parseFloat(dosageValue);
-
-                // Check if the input is empty / non integer / out of range / more than 4 decimal places
-                if (dosageValue === "") {
-                    document.getElementById('dosageError').textContent = "Dosage is required.";
-                    dosage.classList.add('is-invalid');
-                    isValid = false;
-                } else if (isNaN(parsedDosage) || parsedDosage <= 0) {
-                    document.getElementById('dosageError').textContent = "Dosage must be a positive number.";
-                    dosage.classList.add('is-invalid');
-                    isValid = false;
-                } else if (parsedDosage > 999.9999) {
-                    document.getElementById('dosageError').textContent = "Dosage cannot exceed 999.9999.";
-                    dosage.classList.add('is-invalid');
-                    isValid = false;
-                }
-                else {
-                    const decimalPlaces = (dosageValue.split('.')[1] || '').length;
-                    if (decimalPlaces > 4) {
-                        document.getElementById('dosageError').textContent = "Dosage can only have up to 4 decimal places.";
-                        dosage.classList.add('is-invalid');
-                        isValid = false;
+                    if (data.errorType === 'alreadyExist') {
+                        document.getElementById('DrugName').classList.add('is-invalid');
+                        document.getElementById('Dosage').classList.add('is-invalid');
+                    } else if (data.errorType === 'uniqueDrug') {
+                        document.getElementById('Patient').classList.add('is-invalid');
+                        document.getElementById('DrugName').classList.add('is-invalid');
+                    } else if (data.errorType === 'invalidDosage') {
+                         document.getElementById('Dosage').classList.add('is-invalid');
                     }
-                }
-
-                // If any validation failed, set focus to the first invalid field
-                if (!isValid) {
-                    const firstInvalid = document.querySelector('.is-invalid');
-                    if (firstInvalid) {
-                        firstInvalid.focus();
-                    }
-                }
-                return isValid;
-            }
-
-            // "Save" button to trigger validation
-            document.getElementById('saveButton').addEventListener('click', async function (e) {
-                e.preventDefault();
-
-                if (!validateForm()) {
                     return;
                 }
 
-                const patient = document.getElementById('Patient').value;
-                const drugName = document.getElementById('DrugName').value;
-                const dosage = document.getElementById('Dosage').value;
+                saveModal.show();
 
-                try {
-                    const response = await fetch('@Url.Action("ValidatePatient", "Patient")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.getElementsByName('__RequestVerificationToken')[0].value
-                        },
-                        body: JSON.stringify({ patient, drugName, dosage })
-                    });
-
-                    const data = await response.json();
-
-                    if (!data.success) {
-                        const validationSummary = document.getElementById('validation-summary');
-                        validationSummary.textContent = data.message;
-
-                        // Highlight the correct fields based on the error type
-                        if (data.errorType === 'alreadyExist') {
-                            document.getElementById('DrugName').classList.add('is-invalid');
-                            document.getElementById('Dosage').classList.add('is-invalid');
-                        } else if (data.errorType === 'uniqueDrug') {
-                            document.getElementById('Patient').classList.add('is-invalid');
-                            document.getElementById('DrugName').classList.add('is-invalid');
-                        } else if (data.errorType === 'invalidDosage') {
-                             document.getElementById('Dosage').classList.add('is-invalid');
-                        }
-                        return;
-                    }
-
-                    // Validation passed, now show the modal
-                    saveModal.show();
-
-                } catch (error) {
-                    console.error('Validation failed:', error);
-                }
-            });
-
-            // Handle submission from within the modal
-            document.getElementById('confirmSaveBtn').addEventListener('click', function () {
-                document.getElementById('mainForm').submit();
-            });
-
-            // Fix for the "Clear" button functionality
-            document.getElementById('clearButton').addEventListener('click', function () {
-                document.getElementById('Patient').focus();
-                document.getElementById('Patient').value = '';
-                document.getElementById('DrugName').value = '';
-                document.getElementById('Dosage').value = '';
-                clearErrors();
-            });
+            } catch (error) {
+                console.error('Validation failed:', error);
+            }
         });
+
+        document.getElementById('confirmSaveBtn').addEventListener('click', function () {
+            document.getElementById('mainForm').submit();
+        });
+
+        document.getElementById('clearButton').addEventListener('click', function () {
+            document.getElementById('Dosage').focus();
+            document.getElementById('Patient').value = '';
+            document.getElementById('DrugName').value = '';
+            document.getElementById('Dosage').value = '';
+            clearErrors();
+        });
+    });
     </script>
 }

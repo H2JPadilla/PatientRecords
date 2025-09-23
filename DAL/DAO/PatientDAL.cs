@@ -1,6 +1,7 @@
 ﻿using EL;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Runtime.InteropServices;
 
@@ -13,7 +14,8 @@ namespace DAL.DAO
             var list = new List<PatientEntity>();
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("SELECT ID, Patient, DrugName, Dosage, ModifiedDate FROM TablePrescription", con);
+                var cmd = new SqlCommand("selectPatient", con);
+                cmd.CommandType = CommandType.StoredProcedure;
                 con.Open();
                 var rdr = cmd.ExecuteReader();
                 while (rdr.Read())
@@ -35,7 +37,8 @@ namespace DAL.DAO
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("SELECT ID, Patient, DrugName, Dosage, ModifiedDate FROM TablePrescription WHERE ID=@ID", con);
+                var cmd = new SqlCommand("selectPatient", con);
+                cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@ID", id);
                 con.Open();
                 var rdr = cmd.ExecuteReader();
@@ -46,7 +49,7 @@ namespace DAL.DAO
                         ID = (int)rdr["ID"],
                         Patient = rdr["Patient"].ToString(),
                         DrugName = rdr["DrugName"].ToString(),
-                        Dosage = Convert.ToDecimal(rdr["Dosage"]), // Corrected from Convert.ToInt32
+                        Dosage = Convert.ToDecimal(rdr["Dosage"]), 
                         ModifiedDate = Convert.ToDateTime(rdr["ModifiedDate"])
                     };
                 }
@@ -58,8 +61,8 @@ namespace DAL.DAO
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand(
-                    "INSERT INTO TablePrescription (Patient, DrugName, Dosage, ModifiedDate) VALUES (@Patient, @DrugName, @Dosage, @ModifiedDate)", con);
+                var cmd = new SqlCommand("createPatient", con);
+                cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@Patient", patient.Patient);
                 cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);
                 cmd.Parameters.AddWithValue("@Dosage", patient.Dosage);
@@ -74,9 +77,8 @@ namespace DAL.DAO
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand(
-                    "UPDATE TablePrescription SET Patient=@Patient, DrugName=@DrugName, Dosage=@Dosage, ModifiedDate=@ModifiedDate WHERE ID=@ID", con);
-
+                var cmd = new SqlCommand("updatePatient", con);
+                cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@Patient", patient.Patient);
                 cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);
                 cmd.Parameters.AddWithValue("@Dosage", patient.Dosage);
@@ -92,7 +94,8 @@ namespace DAL.DAO
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("DELETE FROM TablePrescription WHERE ID=@ID", con);
+                var cmd = new SqlCommand("deletePatient", con);
+                cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@ID", id);
                 con.Open();
                 cmd.ExecuteNonQuery();

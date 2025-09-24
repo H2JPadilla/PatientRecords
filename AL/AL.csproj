@@ -97,6 +97,7 @@
     <Content Include="Areas\Admin\Content\CSS\adminlte.min.css" />
     <Content Include="Areas\Admin\Content\CSS\all.min.css" />
     <Content Include="Areas\Admin\Content\CSS\bootstrap.min.css" />
+    <Content Include="Areas\Admin\Content\CSS\cssView.css" />
     <Content Include="Areas\Admin\Content\CSS\footer.css" />
     <Content Include="Areas\Admin\Content\CSS\homeindex.css" />
     <Content Include="Areas\Admin\Content\CSS\icheck-bootstrap.min.css" />
@@ -106,11 +107,12 @@
     <Content Include="Areas\Admin\Content\Images\pexels-tima-miroshnichenko-5355709.jpg" />
     <Content Include="Areas\Admin\Content\JavaScript\adminlte.min.js" />
     <Content Include="Areas\Admin\Content\JavaScript\bootstrap.bundle.min.js" />
-    <Content Include="Areas\Admin\Content\JavaScript\filter.js" />
+    <Content Include="Areas\Admin\Content\JavaScript\createJS.js" />
     <Content Include="Areas\Admin\Content\JavaScript\jquery-3.6.0.min.js" />
     <Content Include="Areas\Admin\Content\JavaScript\jquery.min.js" />
     <Content Include="Areas\Admin\Content\JavaScript\lottie.min.js" />
-    <Content Include="Areas\Admin\Content\JavaScript\patient.js" />
+    <Content Include="Areas\Admin\Content\JavaScript\updateJS.js" />
+    <Content Include="Areas\Admin\Content\JavaScript\viewJS.js" />
     <Content Include="Content\PagedList.css" />
     <Content Include="Content\Site.css" />
     <Content Include="Global.asax" />

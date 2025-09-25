@@ -29,15 +29,14 @@ namespace AL.Areas.Admin.Controllers
             string errorMessage;
             string errorField;
 
+            //Trimmer(first, middle (1 space), last).
+            if (patient != null) patient = Validations.CleanSpaces(patient);
+            if (drug != null) drug = Validations.CleanSpaces(drug);
+            if (dosage != null) dosage = Validations.CleanSpaces(dosage);
+
             try
             {
-                //Trimmer(first, middle (1 space), last).
-                if (patient != null) patient = Validations.CleanSpaces(patient);
-                if (drug != null) drug = Validations.CleanSpaces(drug);
-                if (dosage != null) dosage = Validations.CleanSpaces(dosage);
-
                 patients = bll.GetPatients();
-
                 // Filtering logic.
                 if (!string.IsNullOrEmpty(patient))
                     patients = patients
@@ -49,6 +48,7 @@ namespace AL.Areas.Admin.Controllers
                         .ToList();
                 if (!string.IsNullOrEmpty(dosage))
                     patients = patients.Where(p => p.Dosage.ToString().Contains(dosage)).ToList();
+
                 // Updated filter logic.
                 if (date.HasValue)
                     patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
@@ -89,13 +89,14 @@ namespace AL.Areas.Admin.Controllers
             int pageSize = 7)
         {
             string errorMessage = null;
+
+            //Trimmer(first, middle (1 space), last).
+            if (patient != null) patient = Validations.CleanSpaces(patient);
+            if (drug != null) drug = Validations.CleanSpaces(drug);
+            if (dosage != null) dosage = dosage.Trim();
+
             try
             {
-                //Trimmer(first, middle (1 space), last).
-                if (patient != null) patient = Validations.CleanSpaces(patient);
-                if (drug != null) drug = Validations.CleanSpaces(drug);
-                if (dosage != null) dosage = dosage.Trim();
-
                 var patients = bll.GetPatients();
 
                 if (!string.IsNullOrEmpty(patient))
@@ -164,6 +165,14 @@ namespace AL.Areas.Admin.Controllers
             //If invalid, just return.
             if (!ModelState.IsValid)
             {
+                var validationErrors = ModelState.Values.SelectMany(v => v.Errors)
+                                              .Select(e => e.ErrorMessage);
+                string combinedErrorMessage = string.Join("<br/>", validationErrors);
+
+                // Store the combined errors in TempData and set the alert type
+                TempData["Message"] = combinedErrorMessage;
+                TempData["AlertType"] = "danger";
+
                 return View("AddPatient", model);
             }
 
@@ -226,6 +235,13 @@ namespace AL.Areas.Admin.Controllers
             //If invalid, just return.
             if (!ModelState.IsValid)
             {
+                var validationErrors = ModelState.Values.SelectMany(v => v.Errors)
+                                            .Select(e => e.ErrorMessage);
+                string combinedErrorMessage = string.Join("<br/>", validationErrors);
+
+                // Store the combined errors in TempData and set the alert type
+                TempData["Message"] = combinedErrorMessage;
+                TempData["AlertType"] = "danger";
                 return View("UpdatePatient", model);
             }
 
@@ -287,6 +303,7 @@ namespace AL.Areas.Admin.Controllers
         [HttpPost]
         public JsonResult ValidatePatient(string patient, string drugName, string dosage, int? id)
         {
+           
             // Convention in parsing based on specific country format (e.g., en-US).
             CultureInfo culture = new CultureInfo("en-US");
 

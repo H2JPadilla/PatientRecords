@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using DAL.DAO;
+﻿using DAL.DAO;
 using EL;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Linq;
 using UL;
 
 namespace BLL
@@ -42,6 +43,7 @@ namespace BLL
         {
             try
             {
+
                 return dal.Exists(patientName, drugName, dosage, date, patientId, checkUniqueDrugOnly);
             }
             catch (Exception ex)
@@ -86,13 +88,16 @@ namespace BLL
                 {
                     throw new InvalidOperationException(MessageUtil.ExistingDrug);
                 }
-
-                patient.ModifiedDate = DateTime.Now;
+                patient.ModifiedDate = DateTime.Now;    
                 dal.AddPatient(patient);
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException(ex.Message, ex);
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw new Exception(ex.Message, ex);
             }
         }
 
@@ -120,7 +125,7 @@ namespace BLL
                     throw new ArgumentException(message, errorField);
                 }
 
-                // Check if a record with the same data already exists (excluding the current record)
+                //Check if a record with the same data already exists(excluding the current record)
                 var existingPatient = GetPatientById(patient.ID);
                 if (existingPatient == null)
                 {
@@ -130,7 +135,7 @@ namespace BLL
                 patient.Patient = Validations.CleanSpaces(patient.Patient);
                 patient.DrugName = Validations.CleanSpaces(patient.DrugName);
 
-                // Check if there are any changes to the data
+                //Check if there are any changes to the data
                 bool hasChanges =
                     !existingPatient.Patient.Equals(patient.Patient, StringComparison.OrdinalIgnoreCase) ||
                     !existingPatient.DrugName.Equals(patient.DrugName, StringComparison.OrdinalIgnoreCase) ||
@@ -141,7 +146,7 @@ namespace BLL
                     throw new InvalidOperationException(MessageUtil.NoChange);
                 }
 
-                // New check for duplicate record including the modified fields
+                //New check for duplicate record including the modified fields
                 if (Exists(patient.Patient, patient.DrugName, patient.Dosage, DateTime.Now.Date, patient.ID))
                 {
                     throw new InvalidOperationException(MessageUtil.ExistingRecord);
@@ -153,14 +158,18 @@ namespace BLL
                     throw new InvalidOperationException(MessageUtil.ExistingDrug);
                 }
 
-                //Setting the date (NOW)
-                patient.ModifiedDate = DateTime.Now;
+                //Setting the date(NOW)
+
                 dal.UpdatePatient(patient);
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException(ex.Message, ex);
             }
             catch (Exception ex)
             {
-                throw ex;
-            }
+                throw new Exception(ex.Message, ex);
+            }            
         }
 
         //Delete Patient by ID

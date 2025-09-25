@@ -23,7 +23,6 @@ namespace DAL.DAO
                     list.Add(new PatientEntity
                     {
                         ID = (int)rdr["ID"],
-
                         Patient = rdr["Patient"].ToString(),
                         DrugName = rdr["DrugName"].ToString(),
                         Dosage = Convert.ToDecimal(rdr["Dosage"]),

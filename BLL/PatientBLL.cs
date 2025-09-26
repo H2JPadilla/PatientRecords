@@ -88,16 +88,12 @@ namespace BLL
                 {
                     throw new InvalidOperationException(MessageUtil.ExistingDrug);
                 }
-                patient.ModifiedDate = DateTime.Now;    
+                patient.ModifiedDate = DateTime.Now;
                 dal.AddPatient(patient);
             }
             catch (SqlException ex)
             {
                 throw new InvalidOperationException(ex.Message, ex);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message, ex);
             }
         }
 
@@ -108,6 +104,9 @@ namespace BLL
 
             try
             {
+                patient.Patient = Validations.CleanSpaces(patient.Patient);
+                patient.DrugName = Validations.CleanSpaces(patient.DrugName);
+
                 if (!Validations.FillRequired(patient.Patient, "Patient", out message, out errorField))
                 {
                     throw new ArgumentException(message, errorField);
@@ -132,9 +131,7 @@ namespace BLL
                     throw new InvalidOperationException(MessageUtil.RecordNotFound);
                 }
 
-                patient.Patient = Validations.CleanSpaces(patient.Patient);
-                patient.DrugName = Validations.CleanSpaces(patient.DrugName);
-
+            
                 //Check if there are any changes to the data
                 bool hasChanges =
                     !existingPatient.Patient.Equals(patient.Patient, StringComparison.OrdinalIgnoreCase) ||
@@ -159,6 +156,7 @@ namespace BLL
                 }
 
                 //Setting the date(NOW)
+                patient.ModifiedDate = DateTime.Now;
 
                 dal.UpdatePatient(patient);
             }
@@ -166,10 +164,6 @@ namespace BLL
             {
                 throw new InvalidOperationException(ex.Message, ex);
             }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message, ex);
-            }            
         }
 
         //Delete Patient by ID
@@ -181,7 +175,6 @@ namespace BLL
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
         }

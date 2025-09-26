@@ -1,4 +1,4 @@
-﻿﻿@model List<EL.PatientEntity>
+﻿﻿﻿@model List<EL.PatientEntity>
 @{
     ViewBag.Title = "Patient List";
     int counter = (ViewBag.Page - 1) * ViewBag.PageSize + 1;
@@ -88,7 +88,7 @@
                     <a href="#" class="btn btn-sm btn-outline-secondary delete-btn" data-id="@patient.ID" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
                 </td>
                 <td class="col-md-2">@patient.ModifiedDate.ToShortDateString()</td>
-                <td class="col-md-2">@patient.Dosage.ToString("F2")</td>
+                <td class="col-md-2">@(patient.Dosage.HasValue ? patient.Dosage.Value.ToString("F2") : "-")</td>
                 <td class="col-md-2">@patient.DrugName</td>
                 <td class="col-md-3">@patient.Patient</td>
                 <td class="col-md-1" hidden>@patient.ID</td>

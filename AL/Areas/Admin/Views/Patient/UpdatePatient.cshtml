@@ -1,4 +1,4 @@
-﻿﻿@model EL.PatientEntity
+﻿@model EL.PatientEntity
 @{
     ViewBag.Title = "Update Patient";
 }
@@ -14,29 +14,29 @@
     @Html.AntiForgeryToken()
     @Html.HiddenFor(m => m.ID)
     <div id="validation-summary" class="alert d-none"></div>
-    <form>
-        <div>
-            <div class="mb-3 col-4">
-                <label for="Dosage" class="form-label">Dosage<span style="color:red;">*</span></label>
-                @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", title = "Enter the dosage intake", tabindex = "1" })
-            </div>
-            <div class="mb-3 col-4">
-                <label for="DrugName" class="form-label">Drug<span style="color:red;">*</span></label>
-                @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", id = "DrugName", title = "Enter the name of the drug/medicine", tabindex = "2" })
-            </div>
-            <div class="mb-3
-                 col-4">
-                <label for="Patient" class="form-label">Patient<span style="color:red;">*</span></label>
-                @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", id = "Patient", title = "Enter the name of the patient", tabindex = "3" })
-            </div>
+    @* Removed redundant <form> tag here as Html.BeginForm already creates one *@
+    <div>
+        <div class="mb-3 col-4">
+            <label for="Dosage" class="form-label">Dosage<span style="color:red;">*</span></label>
+            @Html.TextBoxFor(m => m.Dosage, new { @class = "form-control", type = "number", step = "any", id = "Dosage", title = "Enter the dosage intake", tabindex = "1" })
         </div>
-        @* Display validation errors from the server and client *@
-        <div class="col-12 mt-3">
-            <button type="button" id="updateButton" class="btn btn-outline-secondary" tabindex="4">Update</button>
-            <button type="button" id="clearButton" class="btn btn-outline-secondary" tabindex="5">Clear All</button>
-            <a href="@Url.Action("ViewPatient")" class="btn btn-outline-secondary" tabindex="6">Cancel</a>
+        <div class="mb-3 col-4">
+            <label for="DrugName" class="form-label">Drug<span style="color:red;">*</span></label>
+            @Html.TextBoxFor(m => m.DrugName, new { @class = "form-control", id = "DrugName", title = "Enter the name of the drug/medicine", tabindex = "2" })
         </div>
-    </form>
+        <div class="mb-3
+                     col-4">
+            <label for="Patient" class="form-label">Patient<span style="color:red;">*</span></label>
+            @Html.TextBoxFor(m => m.Patient, new { @class = "form-control", id = "Patient", title = "Enter the name of the patient", tabindex = "3" })
+        </div>
+    </div>
+
+    <div class="col-12 mt-3">
+        <button type="button" id="updateButton" class="btn btn-outline-secondary" tabindex="4">Update</button>
+        <button type="button" id="clearButton" class="btn btn-outline-secondary" tabindex="5">Clear All</button>
+        <a href="@Url.Action("ViewPatient")" class="btn btn-outline-secondary" tabindex="6">Cancel</a>
+    </div>
+    @* Removed redundant </form> tag here *@
 }
 <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -57,6 +57,7 @@
     </div>
 </div>
 @section Scripts {
+    <script src="~/Areas/Admin/Content/JavaScript/jquery-3.6.0.min.js"></script> @* Added jquery dependency if missing *@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
@@ -79,6 +80,7 @@
                     document.getElementById('validation-summary').classList.add('d-none');
                 });
             });
+
             // remove leading zeros from the Dosage field
             document.getElementById('Dosage').addEventListener('input', function() {
                 let value = this.value;
@@ -88,6 +90,7 @@
                 }
             });
 
+            //Remove error indication
             function clearErrors() {
                 document.querySelectorAll('input').forEach(input => {
                     input.classList.remove('is-invalid');
@@ -96,63 +99,157 @@
                 validationSummary.innerHTML = '';
                 validationSummary.classList.add('d-none');
                 validationSummary.classList.remove('alert-danger');
+                validationSummary.classList.remove('fade-out'); // Clear fade-out classes
+                validationSummary.style.opacity = '1'; // Reset opacity
             }
 
-            function displayError(message, errorField) {
+            //display error (Modified to match AddPatient's fade-out logic)
+            function displayError(message) {
                 const validationSummary = document.getElementById('validation-summary');
                 validationSummary.innerHTML = message;
                 validationSummary.classList.remove('d-none');
                 validationSummary.classList.add('alert-danger');
-                if (errorField) {
-                    const field = document.getElementById(errorField);
-                    if (field) {
-                        field.classList.add('is-invalid');
+
+                // Set timeout for fade-out
+                setTimeout(() => {
+                    validationSummary.style.transition = 'opacity 0.5s ease-out';
+                    validationSummary.style.opacity = '0';
+                    setTimeout(() => {
+                        validationSummary.classList.add('d-none');
+                        validationSummary.style.opacity = '1';
+                    }, 500); // Wait for the transition to finish before hiding
+                }, 5000); // Display for 5 seconds
+            }
+
+            // Client-side validation function (Unified logic from AddPatient)
+            function validateForm() {
+                let firstErrorMessage = "";
+                let fieldToHighlight = null;
+
+                const patient = document.getElementById('Patient');
+                const drugName = document.getElementById('DrugName');
+                const dosage = document.getElementById('Dosage');
+
+                const patientValue = patient.value.trim();
+                const drugNameValue = drugName.value.trim();
+                const dosageValue = dosage.value.trim();
+                const parsedDosage = parseFloat(dosageValue);
+
+                clearErrors(); // Clear all previous highlights and summary message
+
+                // Re-assign trimmed values to fields
+                patient.value = patientValue;
+                drugName.value = drugNameValue;
+
+                // ------------------------------------------------------------------
+                // A. DOSAGE VALIDATION (Priority 1: Specific Errors)
+                // ------------------------------------------------------------------
+                if (dosageValue !== "") {
+                    let dosageError = "";
+
+                    if (isNaN(parsedDosage) || parsedDosage <= 0) {
+                        dosageError = "Dosage must be a positive number.";
+                    } else if (parsedDosage > 999.9999) {
+                        dosageError = "Dosage cannot exceed 999.9999.";
+                    } else {
+                        const decimalPlaces = (dosageValue.split('.')[1] || '').length;
+                        if (decimalPlaces > 4) {
+                            dosageError = "Dosage can only have up to 4 decimal places.";
+                        }
+                    }
+
+                    if (dosageError !== "") {
+                        firstErrorMessage = dosageError;
+                        fieldToHighlight = dosage;
+
+                        fieldToHighlight.classList.add('is-invalid');
+                        displayError(firstErrorMessage);
+                        fieldToHighlight.focus();
+                        return false;
                     }
                 }
+
+
+                // ------------------------------------------------------------------
+                // B. PATIENT VALIDATION (Priority 2: Format/Length Errors)
+                // ------------------------------------------------------------------
+                if (patientValue !== "") {
+                    // Patient name validation: Must contain only alpha, space, hyphen, apostrophe
+                    const isAlphaAndAllowedChars = /^[a-zA-Z\s'-]+$/.test(patientValue);
+
+                    // Rule: Patient format check
+                    if (!isAlphaAndAllowedChars) {
+                        firstErrorMessage = "Patient name must be alphanumeric with hyphens, apostrophes, spaces and max 50 characters.";
+                        fieldToHighlight = patient;
+                    } else if (patientValue.length > 50) {
+                        firstErrorMessage = "Patient name cannot exceed 50 characters.";
+                        fieldToHighlight = patient;
+                    }
+
+                    if (fieldToHighlight === patient) {
+                        fieldToHighlight.classList.add('is-invalid');
+                        displayError(firstErrorMessage);
+                        fieldToHighlight.focus();
+                        return false;
+                    }
+                }
+
+
+                // ------------------------------------------------------------------
+                // C. DRUG VALIDATION (Priority 3: Format/Length Errors)
+                // ------------------------------------------------------------------
+                if (drugNameValue !== "") {
+                    // Rule: Drug format check (alphanumeric with space)
+                    if (!/^[a-zA-Z0-9\s]+$/.test(drugNameValue)) {
+                        firstErrorMessage = "Drug name must be alphanumeric with spaces and max 50 characters.";
+                        fieldToHighlight = drugName;
+                    } else if (drugNameValue.length > 50) {
+                        firstErrorMessage = "Drug name cannot exceed 50 characters.";
+                        fieldToHighlight = drugName;
+                    }
+
+                    if (fieldToHighlight === drugName) {
+                        fieldToHighlight.classList.add('is-invalid');
+                        displayError(firstErrorMessage);
+                        fieldToHighlight.focus();
+                        return false;
+                    }
+                }
+
+
+                // ------------------------------------------------------------------
+                // D. REQUIRED/EMPTY VALIDATION (Priority 4: Check ALL empty fields)
+                // ------------------------------------------------------------------
+                const emptyFields = [];
+
+                if (dosageValue === "") {
+                    emptyFields.push(dosage);
+                }
+                if (drugNameValue === "") {
+                    emptyFields.push(drugName);
+                }
+                if (patientValue === "") {
+                    emptyFields.push(patient);
+                }
+
+                if (emptyFields.length > 0) {
+                    // Highlight ALL empty fields
+                    emptyFields.forEach(field => field.classList.add('is-invalid'));
+
+                    firstErrorMessage = "All field/s are required.";
+                    displayError(firstErrorMessage);
+
+                    // Focus on the first field in the DOM order
+                    emptyFields[0].focus();
+                    return false;
+                }
+
+                // If we reach here, all client-side checks passed.
+                return true;
             }
 
-            // Client-side validation function
-            function validateForm() {
-                let isValid = true;
-                const dosage = document.getElementById('Dosage').value.trim();
-                const drugName = document.getElementById('DrugName').value.trim();
-                const patient = document.getElementById('Patient').value.trim();
-
-                clearErrors();
-
-                if (!patient) {
-                    displayError("All field/s are required.", "Patient");
-                    isValid = false;
-                }
-                if (!drugName) {
-                    displayError("All field/s are required.", "DrugName");
-                    isValid = false;
-                }
-                if (!dosage) {
-                    displayError("All field/s are required.", "Dosage");
-                    isValid = false;
-                }
-
-                const parsedDosage = parseFloat(dosage);
-                if (parsedDosage <= 0) {
-                    displayError("Dosage must be a positive number.", "Dosage");
-                    isValid = false;
-                }
-                // New validation for maximum value
-                if (parsedDosage > 999.9999) {
-                    displayError("Dosage cannot exceed 999.9999.", "Dosage");
-                    isValid = false;
-                }
-                // New validation for up to 4 decimal places
-                if (parsedDosage > 0 && !/^\d+(\.\d{1,4})?$/.test(dosage)) {
-                    displayError("Dosage can have up to four decimal places.", "Dosage");
-                    isValid = false;
-                }
-
-                return isValid;
-            }
-
-            document.getElementById('updateButton').addEventListener('click', function () {
+            document.getElementById('updateButton').addEventListener('click', async function (e) {
+                e.preventDefault();
                 if (!validateForm()) {
                     return;
                 }
@@ -162,38 +259,70 @@
                 const drugName = document.getElementById('DrugName').value;
                 const dosage = document.getElementById('Dosage').value;
 
-                fetch('@Url.Action("ValidatePatient", "Patient")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: JSON.stringify({ patient: patient, drugName: drugName, dosage: dosage, id: patientId })
-                })
-                .then(response => {
+                try {
+                    const response = await fetch('@Url.Action("ValidatePatient", "Patient")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        // IMPORTANT: Send the ID for update validation on the server
+                        body: JSON.stringify({ patient: patient, drugName: drugName, dosage: dosage, id: patientId })
+                    });
+
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    return response.json();
-                })
-                .then(data => {
+                    const data = await response.json();
+
+                    // Clear client-side highlights before applying server-side ones
+                    clearErrors();
+
                     const modalBody = document.getElementById('updateModal').querySelector('.modal-body');
+                    let firstServerErrorField = null;
+
                     if (data.success) {
-                        modalBody.textContent = "Are you sure you want to update this record?";
+                        modalBody.textContent = "Do you want to update this patient record?";
                         updateModal.show();
                     } else {
-                        if (data.errorType === 'noChange') {
+                        // Handle server-side errors
+                        displayError(data.message);
+
+                        if (data.errorType === 'alreadyExist') {
+                            // All 3 fields are involved in the uniqueness check
+                            document.getElementById('Dosage').classList.add('is-invalid');
+                            document.getElementById('DrugName').classList.add('is-invalid');
+                            document.getElementById('Patient').classList.add('is-invalid');
+                            firstServerErrorField = document.getElementById('Dosage');
+
+                            displayError("Record already exists."); // Overwrite with the specific message
+
+                        } else if (data.errorType === 'uniqueDrug') {
+                            // Drug and Patient are involved
+                            document.getElementById('DrugName').classList.add('is-invalid');
+                            document.getElementById('Patient').classList.add('is-invalid');
+                            firstServerErrorField = document.getElementById('DrugName');
+
+                            displayError("Cannot add same drug to a patient."); // Overwrite with the specific message
+
+                        } else if (data.errorType === 'invalidDosage') {
+                            document.getElementById('Dosage').classList.add('is-invalid');
+                            firstServerErrorField = document.getElementById('Dosage');
+                        } else if (data.errorType === 'noChange') {
+                             // Handle no change case separately to show the no-change modal message
                             modalBody.textContent = "No changes were made. Do you still want to update the record?";
                             updateModal.show();
-                        } else {
-                            displayError(data.message);
+                            return; // Don't focus a field on no-change
+                        }
+
+                        if (firstServerErrorField) {
+                            firstServerErrorField.focus();
                         }
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Fetch error:', error);
                     displayError('An unexpected error occurred. Please try again.');
-                });
+                }
             });
 
             document.getElementById('confirmUpdateBtn').addEventListener('click', function () {
@@ -201,7 +330,11 @@
             });
 
             document.getElementById('clearButton').addEventListener('click', function () {
-                document.getElementById('patientForm').reset();
+                document.getElementById('Dosage').value = '';
+                document.getElementById('DrugName').value = '';
+                document.getElementById('Patient').value = '';
+                document.getElementById('Dosage').focus();
+
                 clearErrors();
             });
         });

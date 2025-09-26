@@ -1,10 +1,18 @@
 ﻿using System;
 using System.Text.RegularExpressions;
-
 namespace UL
 {
     public static class Validations
     {
+        public static string RemoveAllWhitespace(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+            return Regex.Replace(input, @"\s+", "");
+        }
+
         public static bool FillRequired(string text, string fieldName, out string message, out string errorField)
         {
             if (string.IsNullOrWhiteSpace(text))

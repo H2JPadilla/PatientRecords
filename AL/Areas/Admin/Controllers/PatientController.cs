@@ -68,7 +68,7 @@ namespace AL.Areas.Admin.Controllers
                 .ToList();
             ViewBag.Patient = patient;
             ViewBag.Drug = drug;
-            ViewBag.Dosage = dosage; 
+            ViewBag.Dosage = dosage;
             ViewBag.Date = date?.ToString("MM-dd-yyyy");
             ViewBag.Page = page;
             ViewBag.TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
@@ -83,7 +83,7 @@ namespace AL.Areas.Admin.Controllers
             //Optional assignment of empty value.
             string patient = "",
             string drug = "",
-            string dosage = "", 
+            string dosage = "",
             DateTime? date = null,
             int page = 1,
             int pageSize = 7)
@@ -95,18 +95,30 @@ namespace AL.Areas.Admin.Controllers
             if (drug != null) drug = Validations.CleanSpaces(drug);
             if (dosage != null) dosage = dosage.Trim();
 
+            // NEW: Prepare the search terms for flexible (whitespace-insensitive) matching.
+            string flexiblePatientSearch = Validations.RemoveAllWhitespace(patient);
+            string flexibleDrugSearch = Validations.RemoveAllWhitespace(drug);
+
             try
             {
                 var patients = bll.GetPatients();
 
+                // Flexible Patient Search
                 if (!string.IsNullOrEmpty(patient))
                     patients = patients
-                        .Where(p => p.Patient != null && p.Patient.IndexOf(patient, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .Where(p =>
+                            p.Patient != null &&
+                            Validations.RemoveAllWhitespace(p.Patient).IndexOf(flexiblePatientSearch, StringComparison.OrdinalIgnoreCase) >= 0)
                         .ToList();
+
+                // Flexible Drug Search
                 if (!string.IsNullOrEmpty(drug))
                     patients = patients
-                        .Where(p => p.DrugName != null && p.DrugName.IndexOf(drug, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .Where(p =>
+                            p.DrugName != null &&
+                            Validations.RemoveAllWhitespace(p.DrugName).IndexOf(flexibleDrugSearch, StringComparison.OrdinalIgnoreCase) >= 0)
                         .ToList();
+
                 if (!string.IsNullOrEmpty(dosage))
                     patients = patients.Where(p => p.Dosage.ToString().Contains(dosage)).ToList();
 
@@ -209,7 +221,7 @@ namespace AL.Areas.Admin.Controllers
                 if (patient == null)
                 {
                     TempData["Message"] = MessageUtil.RecordNotFound;
-                    TempData["AlertType"] = "danger"; 
+                    TempData["AlertType"] = "danger";
                     return RedirectToAction("ViewPatient");
                 }
                 return View(patient);
@@ -219,7 +231,7 @@ namespace AL.Areas.Admin.Controllers
             {
                 Validations.Handle(ex, out errorMessage, out errorField);
                 TempData["Message"] = errorMessage;
-                TempData["AlertType"] = "danger"; 
+                TempData["AlertType"] = "danger";
                 return RedirectToAction("ViewPatient");
             }
         }
@@ -235,13 +247,7 @@ namespace AL.Areas.Admin.Controllers
             //If invalid, just return.
             if (!ModelState.IsValid)
             {
-                var validationErrors = ModelState.Values.SelectMany(v => v.Errors)
-                                            .Select(e => e.ErrorMessage);
-                string combinedErrorMessage = string.Join("<br/>", validationErrors);
-
-                // Store the combined errors in TempData and set the alert type
-                TempData["Message"] = combinedErrorMessage;
-                TempData["AlertType"] = "danger";
+              
                 return View("UpdatePatient", model);
             }
 
@@ -267,7 +273,7 @@ namespace AL.Areas.Admin.Controllers
                 Validations.Handle(ex, out errorMessage, out errorField);
                 ModelState.AddModelError(errorField, errorMessage);
                 TempData["Message"] = errorMessage;
-                TempData["AlertType"] = "danger"; 
+                TempData["AlertType"] = "danger";
                 return View("UpdatePatient", model);
             }
         }
@@ -294,7 +300,7 @@ namespace AL.Areas.Admin.Controllers
             {
                 Validations.Handle(ex, out errorMessage, out errorField);
                 TempData["Message"] = errorMessage;
-                TempData["AlertType"] = "danger"; 
+                TempData["AlertType"] = "danger";
                 return RedirectToAction("ViewPatient");
             }
         }
@@ -303,7 +309,10 @@ namespace AL.Areas.Admin.Controllers
         [HttpPost]
         public JsonResult ValidatePatient(string patient, string drugName, string dosage, int? id)
         {
-           
+
+            patient = Validations.CleanSpaces(patient);
+            drugName = Validations.CleanSpaces(drugName);
+
             // Convention in parsing based on specific country format (e.g., en-US).
             CultureInfo culture = new CultureInfo("en-US");
 

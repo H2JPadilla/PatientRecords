@@ -16,10 +16,11 @@ namespace EL
         [Required(ErrorMessage = "All field/s are required.")]
         [StringLength(50, ErrorMessage = "Drug name cannot exceed 50 characters.")]
         public string DrugName { get; set; }
+
         [Required(ErrorMessage = "All field/s are required.")]
-        [Range(0.0001, 99999999.9999, ErrorMessage = "Dosage must be a positive number up to 4 decimal places.")]
+        [Range(0.0001, 999.9999, ErrorMessage = "Dosage must be a positive number up to 4 decimal places.")]
         [DisplayFormat(DataFormatString = "{0:0.0000}", ApplyFormatInEditMode = true)]
-        public decimal Dosage { get; set; }
+        public decimal? Dosage { get; set; } 
 
         public DateTime ModifiedDate { get; set; }
     }

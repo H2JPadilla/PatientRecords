@@ -78,7 +78,7 @@ namespace DAL.DAO
         }
 
         //Update Patient
-        public void UpdatePatient(PatientEntity patient) 
+        public void UpdatePatient(PatientEntity patient)
         {
             using (var con = GetConnection())
             {

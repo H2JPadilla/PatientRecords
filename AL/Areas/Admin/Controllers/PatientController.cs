@@ -18,9 +18,9 @@ namespace AL.Areas.Admin.Controllers
 
         //View Patient.
         public ActionResult ViewPatient(
-            string patient = "",
-            string drug = "",
-            string dosage = "", // Changed from decimal? to string for search to avoid exact value (LIKE).
+            string patient = null,
+            string drug = null,
+            string dosage = null, // Changed from decimal? to string for search to avoid exact value (LIKE).
             DateTime? date = null,
             int page = 1,
             int pageSize = 7)
@@ -49,7 +49,7 @@ namespace AL.Areas.Admin.Controllers
                 if (!string.IsNullOrEmpty(dosage))
                     patients = patients.Where(p => p.Dosage.ToString().Contains(dosage)).ToList();
 
-                // Updated filter logic.
+                // update filter.
                 if (date.HasValue)
                     patients = patients.Where(p => p.ModifiedDate.Date == date.Value.Date).ToList();
             }
@@ -81,9 +81,9 @@ namespace AL.Areas.Admin.Controllers
         [HttpGet]
         public JsonResult SearchPatients(
             //Optional assignment of empty value.
-            string patient = "",
-            string drug = "",
-            string dosage = "",
+            string patient = null,
+            string drug = null,
+            string dosage = null,
             DateTime? date = null,
             int page = 1,
             int pageSize = 7)
@@ -188,7 +188,7 @@ namespace AL.Areas.Admin.Controllers
                 return View("AddPatient", model);
             }
 
-            //BLL (Server side validation - BLL ?- DAL).
+            //BLL (Server side validation - BLL - DAL).
             try
             {
                 bll.AddPatient(model);

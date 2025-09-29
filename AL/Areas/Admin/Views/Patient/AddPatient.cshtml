@@ -69,11 +69,13 @@
         document.getElementById('Dosage').focus();
         var saveModal = new bootstrap.Modal(document.getElementById('saveModal'));
 
-        // FIX 1: Clear starting '0' value on load
+        // Clear starting '0' value on load
         const dosageInput = document.getElementById('Dosage');
         if (dosageInput.value === '0' || dosageInput.value === '0.0000' || dosageInput.value === '0.00') {
             dosageInput.value = '';
         }
+
+        //======================================================================================================================
 
         // Fade out success or error messages after a few seconds
         const serverMessage = document.getElementById('server-message');
@@ -85,6 +87,8 @@
             }, 5000); // 5 seconds
         }
 
+        //======================================================================================================================
+
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', function() {
                 this.classList.remove('is-invalid');
@@ -92,6 +96,7 @@
             });
         });
 
+        //IF USER STARTS WITH ZERO BUT TYPICALLY WANT TO INPUT A WHOLE NUMBER, IT WILL AUTOMATICALLY MAKE IT WHOLE NUMBER AND REMOVE THE ZERO.
         document.getElementById('Dosage').addEventListener('input', function() {
             let value = this.value;
             if (value.startsWith('0') && value.length > 1 && value.charAt(1) !== '.') {
@@ -99,6 +104,10 @@
             }
         });
 
+        //======================================================================================================================
+
+
+        // REMOVING ERRORS AFTER CLEAR / TYPING VALUE
         function clearErrors() {
             document.querySelectorAll('input').forEach(input => {
                 input.classList.remove('is-invalid');
@@ -110,6 +119,7 @@
             validationSummary.classList.remove('fade-out');
         }
 
+        //DISPLAY ERROR
         function displayError(message) {
             const validationSummary = document.getElementById('validation-summary');
             validationSummary.innerHTML = message;
@@ -127,6 +137,9 @@
             }, 5000); // Display for 5 seconds
         }
 
+        //======================================================================================================================
+
+        //FORM VALIDATIONS
         function validateForm() {
             let firstErrorMessage = "";
             let fieldToHighlight = null;
@@ -146,21 +159,19 @@
             patient.value = patientValue;
             drugName.value = drugNameValue;
 
-            // ------------------------------------------------------------------
-            // A. DOSAGE VALIDATION (Priority 1: Specific Errors)
-            // ------------------------------------------------------------------
+            //DOSAGE VALIDATION
             if (dosageValue !== "") {
                 let dosageError = "";
 
                 if (isNaN(parsedDosage) || parsedDosage <= 0) {
-                    // Rule: Dosage, if it is equal to zero or negative, then highlight only to dosage.
+                    // dosage: if it is equal to zero or negative, then highlight only to dosage.
                     dosageError = "Dosage must be a positive number.";
                 } else if (parsedDosage > 999.9999) {
                     dosageError = "Dosage cannot exceed 999.9999.";
                 } else {
                     const decimalPlaces = (dosageValue.split('.')[1] || '').length;
                     if (decimalPlaces > 4) {
-                        // Rule: Dosage, if it consist more than 4 decimal places, highlight the dosage and display the message.
+                        // dosage: if it consist more than 4 decimal places, highlight the dosage and display the message.
                         dosageError = "Dosage can only have up to 4 decimal places.";
                     }
                 }
@@ -176,20 +187,20 @@
                 }
             }
 
+            //======================================================================================================================
 
-            // ------------------------------------------------------------------
-            // B. PATIENT VALIDATION (Priority 2: Format/Length Errors)
-            // ------------------------------------------------------------------
+            //PATIENT VALIDATION
+
             if (patientValue !== "") {
-                // Patient name validation: Must contain only alpha, space, hyphen, apostrophe
+                // Patient validation: Must contain only alpha, space, hyphen, apostrophe
                 const isAlphaAndAllowedChars = /^[a-zA-Z\s'-]+$/.test(patientValue);
 
-                // Rule: Patient, if it has characters aside from alpha character with space and special characters (hypen and apostrophe only)
+                // Patient: if it has characters aside from alpha character with space and special characters (hypen and apostrophe only)
                 if (!isAlphaAndAllowedChars) {
                     firstErrorMessage = "Patient name must contain only alpha characters, spaces, hyphens (-), and apostrophes (').";
                     fieldToHighlight = patient;
                 } else if (patientValue.length > 50) {
-                    // Rule: last field format validation is if it exceeds 50 character
+                    // last field format validation is if it exceeds 50 character
                     firstErrorMessage = "Patient name cannot exceed 50 characters.";
                     fieldToHighlight = patient;
                 }
@@ -202,10 +213,9 @@
                 }
             }
 
+            //======================================================================================================================
 
-            // ------------------------------------------------------------------
-            // C. DRUG VALIDATION (Priority 3: Format/Length Errors)
-            // ------------------------------------------------------------------
+            //DRUG VALIDATION
             if (drugNameValue !== "") {
                 // Rule: Drug, If it has characters aside from alphanumeric
                 if (!/^[a-zA-Z0-9\s]+$/.test(drugNameValue)) {
@@ -225,10 +235,9 @@
                 }
             }
 
+            //======================================================================================================================
 
-            // ------------------------------------------------------------------
-            // D. REQUIRED/EMPTY VALIDATION (Priority 4: Check ALL empty fields)
-            // ------------------------------------------------------------------
+            //REQUIRED/EMPTY VALIDATION (Priority 4: Check ALL empty fields)
             const emptyFields = [];
 
             if (dosageValue === "") {
@@ -242,7 +251,7 @@
             }
 
             if (emptyFields.length > 0) {
-                // Rule: highlight it among the fields that is empty.
+                // highlight it among the fields that is empty.
                 emptyFields.forEach(field => field.classList.add('is-invalid'));
 
                 firstErrorMessage = "All field/s are required.";
@@ -257,6 +266,9 @@
             return true;
         }
 
+        //======================================================================================================================
+
+        //SAVE
         document.getElementById('saveButton').addEventListener('click', async function (e) {
             e.preventDefault();
             if (!validateForm()) {

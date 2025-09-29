@@ -57,7 +57,7 @@
     </div>
 </div>
 @section Scripts {
-    <script src="~/Areas/Admin/Content/JavaScript/jquery-3.6.0.min.js"></script> @* Added jquery dependency if missing *@
+    <script src="~/Areas/Admin/Content/JavaScript/jquery-3.6.0.min.js"></script> 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var updateModal = new bootstrap.Modal(document.getElementById('updateModal'));
@@ -73,6 +73,8 @@
                 }, 5000); // 5 seconds
             }
 
+            //======================================================================================================================
+
             // removes the error indication when the user starts typing.
             document.querySelectorAll('input').forEach(input => {
                 input.addEventListener('input', function() {
@@ -80,6 +82,8 @@
                     document.getElementById('validation-summary').classList.add('d-none');
                 });
             });
+
+            //======================================================================================================================
 
             // remove leading zeros from the Dosage field
             document.getElementById('Dosage').addEventListener('input', function() {
@@ -89,6 +93,8 @@
                     this.value = parseFloat(value);
                 }
             });
+
+            //======================================================================================================================
 
             //Remove error indication
             function clearErrors() {
@@ -102,6 +108,8 @@
                 validationSummary.classList.remove('fade-out'); // Clear fade-out classes
                 validationSummary.style.opacity = '1'; // Reset opacity
             }
+
+            //======================================================================================================================
 
             //display error (Modified to match AddPatient's fade-out logic)
             function displayError(message) {
@@ -121,7 +129,9 @@
                 }, 5000); // Display for 5 seconds
             }
 
-            // Client-side validation function (Unified logic from AddPatient)
+            //======================================================================================================================
+
+            // Client-side validation function 
             function validateForm() {
                 let firstErrorMessage = "";
                 let fieldToHighlight = null;
@@ -141,9 +151,10 @@
                 patient.value = patientValue;
                 drugName.value = drugNameValue;
 
-                // ------------------------------------------------------------------
-                // A. DOSAGE VALIDATION (Priority 1: Specific Errors)
-                // ------------------------------------------------------------------
+                //======================================================================================================================
+
+                //DOSAGE VALIDATION 
+
                 if (dosageValue !== "") {
                     let dosageError = "";
 
@@ -169,10 +180,9 @@
                     }
                 }
 
+                //======================================================================================================================
 
-                // ------------------------------------------------------------------
-                // B. PATIENT VALIDATION (Priority 2: Format/Length Errors)
-                // ------------------------------------------------------------------
+                //PATIENT VALIDATION 
                 if (patientValue !== "") {
                     // Patient name validation: Must contain only alpha, space, hyphen, apostrophe
                     const isAlphaAndAllowedChars = /^[a-zA-Z\s'-]+$/.test(patientValue);
@@ -194,10 +204,10 @@
                     }
                 }
 
+                //======================================================================================================================
 
-                // ------------------------------------------------------------------
-                // C. DRUG VALIDATION (Priority 3: Format/Length Errors)
-                // ------------------------------------------------------------------
+                // C. DRUG VALIDATION 
+
                 if (drugNameValue !== "") {
                     // Rule: Drug format check (alphanumeric with space)
                     if (!/^[a-zA-Z0-9\s]+$/.test(drugNameValue)) {
@@ -216,10 +226,10 @@
                     }
                 }
 
+                //======================================================================================================================
 
-                // ------------------------------------------------------------------
                 // D. REQUIRED/EMPTY VALIDATION (Priority 4: Check ALL empty fields)
-                // ------------------------------------------------------------------
+
                 const emptyFields = [];
 
                 if (dosageValue === "") {
@@ -248,6 +258,9 @@
                 return true;
             }
 
+            //======================================================================================================================
+
+            //UPDATE
             document.getElementById('updateButton').addEventListener('click', async function (e) {
                 e.preventDefault();
                 if (!validateForm()) {
@@ -266,7 +279,7 @@
                             'Content-Type': 'application/json',
                             'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                         },
-                        // IMPORTANT: Send the ID for update validation on the server
+                        //Send the ID for update validation on the server
                         body: JSON.stringify({ patient: patient, drugName: drugName, dosage: dosage, id: patientId })
                     });
 
@@ -275,7 +288,6 @@
                     }
                     const data = await response.json();
 
-                    // Clear client-side highlights before applying server-side ones
                     clearErrors();
 
                     const modalBody = document.getElementById('updateModal').querySelector('.modal-body');
@@ -324,6 +336,10 @@
                     displayError('An unexpected error occurred. Please try again.');
                 }
             });
+
+            //======================================================================================================================
+
+            //CONFIRM
 
             document.getElementById('confirmUpdateBtn').addEventListener('click', function () {
                 document.getElementById('patientForm').submit();

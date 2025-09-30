@@ -61,28 +61,11 @@ namespace DAL.DAO
         }
 
         //Add Patient
-        public void AddPatient(PatientEntity patient)
+        public void CreateUpdate(PatientEntity patient)
         {
             using (var con = GetConnection())
             {
-                var cmd = new SqlCommand("spCreatePatient", con); // SP
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@Patient", patient.Patient);
-                cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);
-                cmd.Parameters.AddWithValue("@Dosage", patient.Dosage);
-                cmd.Parameters.AddWithValue("@ModifiedDate", patient.ModifiedDate);
-
-                con.Open();
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        //Update Patient
-        public void UpdatePatient(PatientEntity patient)
-        {
-            using (var con = GetConnection())
-            {
-                var cmd = new SqlCommand("spUpdatePatient", con); // SP
+                var cmd = new SqlCommand("spCreateUpdate", con); // SP
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@Patient", patient.Patient);
                 cmd.Parameters.AddWithValue("@DrugName", patient.DrugName);

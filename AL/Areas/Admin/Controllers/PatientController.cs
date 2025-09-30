@@ -191,7 +191,7 @@ namespace AL.Areas.Admin.Controllers
             //BLL (Server side validation - BLL - DAL).
             try
             {
-                bll.AddPatient(model);
+                bll.CreateUpdate(model);
                 //Valid Data == Success.
                 TempData["Message"] = MessageUtil.AddSuccess;
                 TempData["AlertType"] = "success";
@@ -254,7 +254,7 @@ namespace AL.Areas.Admin.Controllers
             //BLL (Server side validation - BLL ?- DAL).
             try
             {
-                bll.UpdatePatient(model);
+                bll.CreateUpdate(model);
                 TempData["Message"] = MessageUtil.UpdateSuccess;
                 TempData["AlertType"] = "success";
                 return RedirectToAction("ViewPatient");
